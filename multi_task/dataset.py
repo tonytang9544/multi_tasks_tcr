@@ -12,8 +12,6 @@ from config import MTDNNConfig
 from torch.utils.data import Dataset
 from libtcrlm import schema
 from libtcrlm.schema import Tcr
-from libtcrlm.tokeniser.cdr_tokeniser import CdrTokeniser
-from libtcrlm.schema.df_manipulation import _generate_tcr_from_row
 from libtcrlm.tokeniser.token_indices import DefaultTokenIndex
 from torch.nn import utils
 import numpy as np
