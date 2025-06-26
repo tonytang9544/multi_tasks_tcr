@@ -35,4 +35,4 @@ sceptr_df = sceptr_df.dropna()
 print(sceptr_df.head())
 
 sceptr_df_csv_path = "/Users/tangm/The Francis Crick Dropbox/Minzhe Tang/Tony/After-PhD/Machine_learning_MSc/UCL-AI_for_biomed/Course_material/thesis_project/TCR_project/dataset/CD4_CD8_sceptr.csv.gz"
-sceptr_df.to_csv(sceptr_df_csv_path, )
+sceptr_df.to_csv(sceptr_df_csv_path, index=False)
