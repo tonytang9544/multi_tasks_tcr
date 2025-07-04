@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 
 def plot_correlation(dist_array, TABLO_data, figure_name):
     '''
@@ -20,32 +19,31 @@ def plot_correlation(dist_array, TABLO_data, figure_name):
     # number of tcr pairs within a certain edit distance
     num_pairs, _ = dist_array.shape
 
-    # maximum tcrdist found in the array
-    max_tcrdist = np.max(dist_array[:, 2])
-    print(max_tcrdist)
-
-    # calculate distance correlation and store into an array
-    # [[number of consistent pairs, number of inconsistent pairs, tcrdist] ...]
-    dist_correlation_array = np.zeros((2, max_tcrdist+1))
+    # calculate distance correlation and store into a dictionary
+    dist_correlation_dict = {}
 
     for i in range(num_pairs):
         tcr1, tcr2, tcr_dist = dist_array[i, :]
+        if tcr_dist not in dist_correlation_dict.keys():
+            dist_correlation_dict[tcr_dist] = [0, 0]
         if TABLO_data.iloc[tcr1]["CD4_or_CD8"] == TABLO_data.iloc[tcr2]["CD4_or_CD8"]:
-            dist_correlation_array[0, tcr_dist] += 1
+            dist_correlation_dict[tcr_dist][0] += 1
         else:
-            dist_correlation_array[1, tcr_dist] += 1
+            dist_correlation_dict[tcr_dist][1] += 1
 
-    array_to_plot = np.zeros((max_tcrdist+1, 2))
+    print(dist_correlation_dict)
 
-    for i in range(max_tcrdist+1):
-        total_counts_for_each_tcr_dist = dist_correlation_array[0, i*3] + dist_correlation_array[1, i*3]
-        if total_counts_for_each_tcr_dist > 0:
-            array_to_plot[i, :] = (i*3, dist_correlation_array[0, i*3] / total_counts_for_each_tcr_dist)
+    tcr_dists = [tcr_dist for tcr_dist in dist_correlation_dict.keys()]
+    tcr_dists.sort()
+    agreement_ratio = []
 
-    print(array_to_plot)
-    print(array_to_plot.shape)
-    plt.plot(array_to_plot[:, 0], array_to_plot[:, 1])
-    plt.xticks([i*3 for i in range(7)])
+    for tcr_dist in tcr_dists:
+        total_counts_for_each_tcr_dist = dist_correlation_dict[tcr_dist][0] + dist_correlation_dict[tcr_dist][1]
+        agreement_ratio.append(dist_correlation_dict[tcr_dist][0] / total_counts_for_each_tcr_dist)
+
+    plt.plot(tcr_dists, agreement_ratio)
+    # plt.xticks([i*3 for i in range(7)])
     plt.xlabel("TCR Dist")
     plt.ylabel("% same CD4/CD8 phenotypes")
+    plt.title(figure_name)
     plt.savefig(figure_name)
