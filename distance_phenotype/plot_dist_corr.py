@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-dist_correlation_dictionary = np.load("/home/minzhetang/Documents/results/distance_phenotype/dist_correlation_array.npy")
+dist_correlation_array = np.load("/home/minzhetang/Documents/results/distance_phenotype/dist_correlation_array.npy")
 
 array_to_plot = np.zeros((7, 2))
 
@@ -9,7 +9,7 @@ array_to_plot = np.zeros((7, 2))
 # print(array_to_plot)
 
 for i in range(7):
-    array_to_plot[i, :] = (i*3, dist_correlation_dictionary[0, i*3] / (dist_correlation_dictionary[0, i*3] + dist_correlation_dictionary[1, i*3]))
+    array_to_plot[i, :] = (i*3, dist_correlation_array[0, i*3] / (dist_correlation_array[0, i*3] + dist_correlation_array[1, i*3]))
 
 print(array_to_plot)
 print(array_to_plot.shape)
