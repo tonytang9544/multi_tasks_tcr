@@ -41,9 +41,9 @@ def plot_correlation(dist_array, TABLO_data, figure_name):
         total_counts_for_each_tcr_dist = dist_correlation_dict[tcr_dist][0] + dist_correlation_dict[tcr_dist][1]
         agreement_ratio.append(dist_correlation_dict[tcr_dist][0] / total_counts_for_each_tcr_dist)
 
-    plt.plot(tcr_dists, agreement_ratio)
+    plt.plot(tcr_dists, agreement_ratio, label=figure_name)
     # plt.xticks([i*3 for i in range(7)])
-    plt.xlabel("TCR Dist")
-    plt.ylabel("% same CD4/CD8 phenotypes")
-    plt.title(figure_name)
-    plt.savefig(figure_name)
+    # plt.xlabel("TCR Dist")
+    # plt.ylabel("% same CD4/CD8 phenotypes")
+    # plt.title(figure_name)
+    # plt.savefig(figure_name)

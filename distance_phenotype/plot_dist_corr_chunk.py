@@ -2,6 +2,7 @@ from corr_utils import plot_correlation
 import os
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 
 # load TABLO and calculated distance array
 # dist_array = np.load("/home/minzhetang/Documents/results/distance_phenotype/semi_total_nn_array.npy")
@@ -11,8 +12,9 @@ import numpy as np
 dist_arrays = {}
 chunk_datasets = {}
 
-for root, dirs, files in os.walk("../../../results/distance_phenotype/chunk_dataset"):
+for root, dirs, files in os.walk("/home/minzhetang/Documents/results/distance_phenotype/chunk_dataset"):
     for file in files:
+        # print(file)
         if file.endswith(".csv.gz"):
             chunk_num = file.split(".csv")[0].split("chunk_")[1]
             chunk_datasets[chunk_num] = os.path.join(root, file)
@@ -27,5 +29,13 @@ for i in range(6):
     dist_array = np.load(dist_arrays[str(i)])
     TABLO_data = pd.read_csv(chunk_datasets[str(i)])
 
-    plot_correlation(dist_array, TABLO_data, f"correlation_plot_chunk_{i}")
+    plot_correlation(dist_array, TABLO_data, f"chunk_{i}")
+
+plt.xlabel("TCR Dist")
+plt.ylabel("% same CD4/CD8 phenotypes")
+plt.xticks([i*3 for i in range(7)])
+plt.title("agreement ratio vs tcr dist")
+plt.legend()
+plt.savefig("correlation_plot_by_chunk")
+plt.show()
     
