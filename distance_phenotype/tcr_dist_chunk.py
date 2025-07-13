@@ -2,7 +2,7 @@ from pyrepseq.nn import nearest_neighbor_tcrdist
 import pandas as pd
 import numpy as np
 
-dataset_path = "~/Documents/results/data_preprocessing/TABLO/CD4_CD8_sceptr_nr_cdrs.csv.gz"
+dataset_path = "~/Documents/results/data_preprocessing/TABLO/CD4_CD8_sceptr.csv.gz"
 dataset = pd.read_csv(dataset_path)
 
 print(dataset.head())

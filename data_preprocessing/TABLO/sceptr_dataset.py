@@ -2,7 +2,7 @@ import pandas as pd
 import tidytcells
 
 # load from file
-col_renamed_df_path = "/Users/tangm/The Francis Crick Dropbox/Minzhe Tang/Tony/After-PhD/Machine_learning_MSc/UCL-AI_for_biomed/Course_material/thesis_project/TCR_project/dataset/CD4_CD8_data_col_renamed.csv.gz"
+col_renamed_df_path = "CD4_CD8_data_col_renamed.csv.gz"
 
 dataset = pd.read_csv(col_renamed_df_path)
 print(dataset.columns)
@@ -36,8 +36,10 @@ for col in standardise_junctions:
 # drop NA for non-standard junctions
 sceptr_df = sceptr_df.dropna()
 
+# drop redundant tcrs
+sceptr_df = sceptr_df.drop_duplicates()
+
 print(sceptr_df.head())
 
 # save to file
-sceptr_df_csv_path = "/Users/tangm/The Francis Crick Dropbox/Minzhe Tang/Tony/After-PhD/Machine_learning_MSc/UCL-AI_for_biomed/Course_material/thesis_project/TCR_project/dataset/CD4_CD8_sceptr.csv.gz"
-sceptr_df.to_csv(sceptr_df_csv_path, index=False)
+sceptr_df.to_csv("CD4_CD8_sceptr.csv.gz", index=False)

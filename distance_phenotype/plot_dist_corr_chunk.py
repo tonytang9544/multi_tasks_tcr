@@ -1,4 +1,4 @@
-from corr_utils import plot_correlation
+from corr_utils import plot_correlation_using_ndarray
 import os
 import pandas as pd
 import numpy as np
@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 dist_arrays = {}
 chunk_datasets = {}
 
-for root, dirs, files in os.walk("/home/minzhetang/Documents/results/distance_phenotype/chunk_dataset"):
+for root, dirs, files in os.walk("/home/minzhetang/Documents/results/distance_phenotype/chunk_dataset/20250713"):
     for file in files:
         # print(file)
         if file.endswith(".csv.gz"):
@@ -29,7 +29,7 @@ for i in range(6):
     dist_array = np.load(dist_arrays[str(i)])
     TABLO_data = pd.read_csv(chunk_datasets[str(i)])
 
-    plot_correlation(dist_array, TABLO_data, f"chunk_{i}")
+    plot_correlation_using_ndarray(dist_array=dist_array, TABLO_data=TABLO_data, figure_name=f"chunk_{i}")
 
 plt.xlabel("TCR Dist")
 plt.ylabel("% same CD4/CD8 phenotypes")
