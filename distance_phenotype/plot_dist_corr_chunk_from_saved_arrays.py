@@ -11,9 +11,7 @@ for root, dirs, files in os.walk("/home/minzhetang/Documents/results/distance_ph
             chunk_num = file.split(".npy")[0].split("chunk_")[1]
             corr_arrays[chunk_num] = np.load(os.path.join(root, file))
 
-
-# print(chunk_datasets.keys())
-# print(dist_arrays.keys())
+print(corr_arrays)
 
 for chunk_num, dist_correlation_array in corr_arrays.items():
     total = dist_correlation_array[0, :] + dist_correlation_array[1, :]
