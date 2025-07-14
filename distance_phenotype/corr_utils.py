@@ -31,12 +31,15 @@ def plot_correlation_using_ndarray(dist_array, TABLO_data, figure_name="random_n
         else:
             dist_correlation_array[1, tcr_dist] += 1
     
-    print(dist_correlation_array)
+    # print(dist_correlation_array)
     np.save(f"dist_correlation_array_for_{figure_name}", dist_correlation_array)
 
-    ratio = dist_correlation_array[:, 1] / (dist_correlation_array.T.dot(np.array([1, 1])))
+    total = dist_correlation_array[0, :] + dist_correlation_array[1, :]
 
-    plt.plot(np.array([i for i in range(max_tcrdist+1)])[~np.isnan(ratio)], ratio[~np.isnan(ratio)], label=figure_name)
+    tcr_dist_idx = np.array([i for i in range(max_tcrdist+1)])[~(total==0)]
+    ratio = dist_correlation_array[0, :][~(total==0)] / total[~(total==0)]
+
+    plt.plot(tcr_dist_idx, ratio, label=figure_name)
 
 
 def calculate_correlation_dict(dist_array, TABLO_data, figure_name="random_name"):
