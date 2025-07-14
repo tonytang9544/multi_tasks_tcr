@@ -25,8 +25,8 @@ for root, dirs, files in os.walk("/home/minzhetang/Documents/results/distance_ph
 # print(chunk_datasets.keys())
 # print(dist_arrays.keys())
 
-# for i in range(6):
-for i in range(1):
+for i in range(4, 6):
+# for i in range(1):
     dist_array = np.load(dist_arrays[str(i)])
     TABLO_data = pd.read_csv(chunk_datasets[str(i)])
 
@@ -34,7 +34,7 @@ for i in range(1):
 
 plt.xlabel("TCR Dist")
 plt.ylabel("% same CD4/CD8 phenotypes")
-plt.xticks([i*3 for i in range(7)])
+# plt.xticks([i*3 for i in range(7)])
 plt.title("agreement ratio vs tcr dist")
 plt.legend()
 plt.savefig("correlation_plot_by_chunk")

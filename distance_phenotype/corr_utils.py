@@ -39,7 +39,8 @@ def plot_correlation_using_ndarray(dist_array, TABLO_data, figure_name="random_n
     tcr_dist_idx = np.array([i for i in range(max_tcrdist+1)])[~(total==0)]
     ratio = dist_correlation_array[0, :][~(total==0)] / total[~(total==0)]
 
-    plt.plot(tcr_dist_idx, ratio, label=figure_name)
+    # plt.plot(tcr_dist_idx, ratio, label=figure_name)
+    plt.scatter(tcr_dist_idx, ratio, label=figure_name)
 
 
 def calculate_correlation_dict(dist_array, TABLO_data, figure_name="random_name"):
