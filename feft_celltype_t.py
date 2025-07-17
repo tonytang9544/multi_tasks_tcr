@@ -15,14 +15,11 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 
-import os
 
 
 CD_label_col = "CD4_or_CD8"
 
-dataset_root = "/home/minzhetang/Documents/dataset"
-
-tcr_data_path = os.path.join(dataset_root, "CD4_CD8_sceptr_nr_cdrs.csv.gz")
+tcr_data_path = "~/Documents/results/data_preprocessing/TABLO/CD4_CD8_sceptr.csv.gz"
 
 
 tc_df = pd.read_csv(tcr_data_path)
@@ -115,7 +112,8 @@ class TCellClassifier(nn.Module):
 input_dim = X_train.shape[1]
 model = TCellClassifier(input_dim)
 criterion = nn.BCELoss()
-optimizer = optim.Adam(model.parameters(), lr=0.001)
+optimizer = optim.Adam(model.parameters(), lr=1e-2)
+scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
 
 num_epochs = 20
 
@@ -135,6 +133,7 @@ for epoch in range(num_epochs):
         optimizer.step()
         
         running_loss += loss.item()
+    scheduler.step()
     
     print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {running_loss/len(train_loader):.4f}')
 
