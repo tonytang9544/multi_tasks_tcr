@@ -4,6 +4,7 @@ VDJDB_dataset = pd.read_csv("~/Documents/dataset/20250610VDJDB.csv")
 
 print(VDJDB_dataset.columns)
 
+
 useful_cols = ["cdr3alpha.id", "cdr3beta.id", "epitope.id"]
 print(VDJDB_dataset[useful_cols].head(20))
 
@@ -15,3 +16,14 @@ for i in range(len(useful_cols)):
 
 print(VDJDB_dataset.head())
 print(VDJDB_dataset.describe())
+
+print(VDJDB_dataset[VDJDB_dataset["cdr3alpha_len"] <= 5][useful_cols])
+
+nr_dataset = VDJDB_dataset.drop_duplicates()
+
+
+for i in range(len(useful_cols)):
+    nr_dataset[len_cols[i]] = nr_dataset[useful_cols[i]].apply(lambda x: len(x))
+
+print(nr_dataset.describe())
+
