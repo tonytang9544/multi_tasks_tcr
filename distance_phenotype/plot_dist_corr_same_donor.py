@@ -5,7 +5,7 @@ import pandas as pd
 
 
 npy_list = []
-for root, dirs, files in os.walk("~/Documents/results/distance_phenotype/within_same_donor"):
+for root, dirs, files in os.walk("/home/minzhetang/Documents/results/distance_phenotype/within_same_donor"):
     for file in files:
         if file.endswith(".npy"):
             npy_list.append(os.path.join(root, file))

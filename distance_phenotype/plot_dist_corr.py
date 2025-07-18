@@ -3,8 +3,8 @@ import numpy as np
 import pandas as pd
 
 # load TABLO and calculated distance array
-dist_array = np.load("~/Documents/results/distance_phenotype/semi_total_nn_array.npy")
-TABLO_data = pd.read_csv("~/Documents/results/data_preprocessing/TABLO/CD4_CD8_sceptr_nr_cdrs.csv.gz")
+dist_array = np.load("/home/minzhetang/Documents/results/distance_phenotype/semi_total_nn_array.npy")
+TABLO_data = pd.read_csv("/home/minzhetang/Documents/results/data_preprocessing/TABLO/CD4_CD8_sceptr_nr_cdrs.csv.gz")
 
 # number of tcr pairs within a certain edit distance
 num_pairs, _ = dist_array.shape

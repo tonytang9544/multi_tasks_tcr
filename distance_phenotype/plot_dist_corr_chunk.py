@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 dist_arrays = {}
 chunk_datasets = {}
 
-for root, dirs, files in os.walk("~/Documents/results/distance_phenotype/chunk_dataset/20250713"):
+for root, dirs, files in os.walk("/home/minzhetang/Documents/results/distance_phenotype/chunk_dataset/20250713"):
     for file in files:
         # print(file)
         if file.startswith("dataset_") and file.endswith(".csv.gz"):
