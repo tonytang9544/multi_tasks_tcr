@@ -3,17 +3,16 @@ import matplotlib.pyplot as plt
 import os
 import pandas as pd
 
-# dist_correlation_dictionary = np.load("/home/minzhetang/Documents/results/distance_phenotype/dist_correlation_array.npy")
 
 npy_list = []
-for root, dirs, files in os.walk("/home/minzhetang/Documents/results/distance_phenotype/within_same_donor"):
+for root, dirs, files in os.walk("~/Documents/results/distance_phenotype/within_same_donor"):
     for file in files:
         if file.endswith(".npy"):
             npy_list.append(os.path.join(root, file))
 
 print(npy_list)
 
-TABLO_data = pd.read_csv("/home/minzhetang/Documents/results/data_preprocessing/TABLO/CD4_CD8_sceptr_nr_cdrs.csv.gz")
+TABLO_data = pd.read_csv("~/Documents/results/data_preprocessing/TABLO/CD4_CD8_sceptr_nr_cdrs.csv.gz")
 # print(TABLO_data.head())
 
 
