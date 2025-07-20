@@ -7,13 +7,16 @@ import sceptr
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import LabelEncoder
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_auc_score, RocCurveDisplay
+import matplotlib.pyplot as plt
 from imblearn.under_sampling import RandomUnderSampler
 
 from torch.utils.data import DataLoader, TensorDataset
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
+
+import pickle
 
 
 
@@ -113,7 +116,7 @@ input_dim = X_train.shape[1]
 model = TCellClassifier(input_dim)
 criterion = nn.BCELoss()
 optimizer = optim.Adam(model.parameters(), lr=1e-2)
-scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
+# scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
 
 num_epochs = 20
 
@@ -133,13 +136,13 @@ for epoch in range(num_epochs):
         optimizer.step()
         
         running_loss += loss.item()
-    scheduler.step()
+    # scheduler.step()
     
     print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {running_loss/len(train_loader):.4f}')
 
 print('Training complete')
 
-torch.save(model, "20250623model.pt")
+torch.save(model, "model.pt")
 
 model.eval()
 
@@ -159,3 +162,16 @@ with torch.no_grad():
 # Calculate AUC
 auc = roc_auc_score(all_labels, all_preds)
 print(f'AUC: {auc}')
+RocCurveDisplay.from_predictions(all_labels, all_preds)
+plt.savefig("AUC plot")
+plt.clf()
+plt.close()
+
+with open("prediction_label_dictionary.pkl", "wb") as f:
+    pickle.save(
+        {
+            "all_preds": all_preds,
+            "all_labels": all_labels
+        },
+        f
+    )
