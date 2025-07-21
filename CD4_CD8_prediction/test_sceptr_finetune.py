@@ -24,11 +24,13 @@ tcrs = pd.DataFrame(
 
 print(model._calc_torch_representations(tcrs))
 
-# model._bert.set_fine_tuning_mode(True)
+# model._bert.set_fine_tuning_mode(True) # this does not work
 tokenised_tcrs = [model._tokeniser.tokenise(tcr) for tcr in schema.generate_tcr_series(tcrs)]
 padded_batch = utils.rnn.pad_sequence(
                 sequences=tokenised_tcrs,
                 batch_first=True,
                 padding_value=DefaultTokenIndex.NULL,
             ).to(model._device)
-print(model._bert.get_vector_representations_of(padded_batch))
+output = model._bert.get_vector_representations_of(padded_batch)
+print(output)
+print(output.shape)

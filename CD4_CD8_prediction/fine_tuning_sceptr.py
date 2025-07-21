@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np 
 import torch
+from torchinfo import summary
 
 import sceptr
 from libtcrlm import schema
@@ -29,27 +30,31 @@ tcr_data_path = "~/Documents/results/data_preprocessing/TABLO/CD4_CD8_sceptr.csv
 
 tc_df = pd.read_csv(tcr_data_path).iloc[0:500]
 
-sceptr_model = sceptr.variant.default()
-
-data = []
-for entry in tc_df.iterrows():
-    data.append({'subject': entry["donor"], CD_label_col: entry[CD_label_col], 'embedding': sceptr_model._tokeniser.tokenize(entry)})
+# data = []
+# for entry in tc_df.iterrows():
+#     data.append({'subject': entry["donor"], CD_label_col: entry[CD_label_col], 'embedding': sceptr_model._tokeniser.tokenize(entry)})
 
 batch_s = 1024*4
 hidden_dim_1 = 128*2
 hidden_dim_2 = 64*4
 
 class SceptrFineTuneClass(nn.Module):
-    def __init__(self, input_dim, device=None):
+    def __init__(self, input_dim=64):
+        '''
+        input_dim=64 is the output dimension of the default Sceptr model
+        '''
         super().__init__()
         self.sceptr_model = sceptr.variant.default()
-        if device is None:
-            device = self.sceptr_model._device
         
-        self.fc1 = nn.Linear(input_dim, hidden_dim_1).to(device)
-        self.dropout = nn.Dropout(0.1).to(device)
-        self.fc2 = nn.Linear(hidden_dim_1, hidden_dim_2).to(device)
-        self.fc3 = nn.Linear(hidden_dim_2, 1).to(device)
+        # self.fc1 = nn.Linear(input_dim, hidden_dim_1).to(self.sceptr_model._device)
+        # self.dropout = nn.Dropout(0.1).to(self.sceptr_model._device)
+        # self.fc2 = nn.Linear(hidden_dim_1, hidden_dim_2).to(self.sceptr_model._device)
+        # self.fc3 = nn.Linear(hidden_dim_2, 1).to(self.sceptr_model._device)
+
+        self.fc1 = nn.Linear(input_dim, hidden_dim_1)
+        self.dropout = nn.Dropout(0.1)
+        self.fc2 = nn.Linear(hidden_dim_1, hidden_dim_2)
+        self.fc3 = nn.Linear(hidden_dim_2, 1)
 
     def forward(self, x):
         x = F.relu(self.fc1(x))
@@ -58,6 +63,10 @@ class SceptrFineTuneClass(nn.Module):
         x = self.dropout(x)
         x = F.sigmoid(self.fc3(x))
         return x
+    
+model = SceptrFineTuneClass()
+model = model.to(model.sceptr_model._device)
+summary(model)
 
 # subjects = tc_df['donor'].unique()
 
