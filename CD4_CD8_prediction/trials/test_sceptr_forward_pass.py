@@ -61,10 +61,10 @@ def tokenise_each_entry(entry: pd.Series):
         tokenised.extend(
             list(zip(
                 (
-                    [AminoAcidTokenIndex[aa] for aa in entry[k]], # token_indices 
-                    [idx for idx, _ in enumerate(entry[k], start=1)], # token_positions = 
-                    [len(entry[k]) for _ in entry[k]], # cdr_length = 
-                    [v for _ in entry[k]] # compartment_index = 
+                    [AminoAcidTokenIndex[aa] for aa in entry[k]],       # token_indices 
+                    [idx for idx, _ in enumerate(entry[k], start=1)],   # token_positions
+                    [len(entry[k]) for _ in entry[k]],                  # cdr_length
+                    [v for _ in entry[k]]                               # compartment_index = 
                 )
             ))
         )
