@@ -52,6 +52,14 @@ MyCdrCompartmentIndex = {
 
 
 def tokenise_each_entry(entry: pd.Series):
+    '''
+    input:
+        each row of a DataFrame with columns ["CDR1A", "CDR2A", "CDR3A", "CDR1B", "CDR2B", "CDR3B"]
+        where each column contains just the amino acid sequences, NOT gene names!
+
+    return:
+        tokenised single vector representing the entire TCR
+    '''
     initial_cls_vector = (AminoAcidTokenIndex.CLS, 0, 0, 0)
 
     tokenised = []
@@ -64,14 +72,23 @@ def tokenise_each_entry(entry: pd.Series):
                     [AminoAcidTokenIndex[aa] for aa in entry[k]],       # token_indices 
                     [idx for idx, _ in enumerate(entry[k], start=1)],   # token_positions
                     [len(entry[k]) for _ in entry[k]],                  # cdr_length
-                    [v for _ in entry[k]]                               # compartment_index = 
+                    [v for _ in entry[k]]                               # compartment_index
                 )
             ))
         )
 
     return tokenised
 
+
 def cdr_tokenise(df: pd.DataFrame):
+    '''
+    input:
+        entire DataFrame containing amino acid sequences of all CDRs of both chains of TCRs
+        where column has names ["CDR1A", "CDR2A", "CDR3A", "CDR1B", "CDR2B", "CDR3B"]
+    
+    output:
+        padded tokenised vectors, where each vector represent a single TCR
+    '''
     tokenised = []
     for i, entry in df.iterrows():
         tokenised.append(tokenise_each_entry(entry))
