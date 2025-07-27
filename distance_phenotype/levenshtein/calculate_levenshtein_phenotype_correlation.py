@@ -6,8 +6,8 @@ import datetime
 
 running_time_stamp = str(datetime.datetime.now().strftime("%Y%m%d_%H%M"))
 
-dataset = pd.read_csv("20250727_1730_dataset_sub_sampled_2000.csv")
-levenshtein_array = np.load("20250727_1730_levenshtein_array_2000.npy")
+dataset = pd.read_csv("20250727_1814_dataset_sub_sampled_10000.csv")
+levenshtein_array = np.load("20250727_1814_levenshtein_array_10000.npy")
 
 max_distance = np.max(levenshtein_array)
 

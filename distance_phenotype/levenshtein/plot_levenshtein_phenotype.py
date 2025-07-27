@@ -5,8 +5,9 @@ import pickle
 import datetime
 
 running_time_stamp = str(datetime.datetime.now().strftime("%Y%m%d_%H%M"))
+print(running_time_stamp)
 
-corr_array = np.load("250727_1745_correlation_array.npy")
+corr_array = np.load("20250727_2324_correlation_array.npy")
 
 total_count = corr_array.T.dot((1, 1))
 print(total_count)
@@ -19,7 +20,8 @@ with open(f"{running_time_stamp}_plot_data.pkl", "wb") as f:
         {
             "edit_dist_indices": edit_dist_idx,
             "ratio": ratio
-        }
+        },
+        f
     )
 
 plt.scatter(edit_dist_idx, ratio)
