@@ -1,4 +1,5 @@
 from Levenshtein import distance
+from libtcrlm import schema
 from tqdm import tqdm
 
 import pandas as pd
@@ -10,28 +11,72 @@ import datetime
 running_time_stamp = str(datetime.datetime.now().strftime("%Y%m%d_%H%M"))
 print(f"script running time stamp is {running_time_stamp}")
 
-dataset_path = "~/Documents/results/data_preprocessing/TABLO/CD4_CD8_sceptr_nr_cdrs.csv.gz"
+# dataset_path = "~/Documents/results/data_preprocessing/TABLO/CD4_CD8_sceptr_nr_cdrs.csv.gz"
 
-dataset = pd.read_csv(dataset_path).dropna()
+# dataset = pd.read_csv(dataset_path).dropna().reset_index(drop=True)
+
+
+def generate_all_three_cdrs(dataset: pd.DataFrame):
+    CDR1A = []
+    CDR2A = []
+    CDR1B = []
+    CDR2B = []
+
+    aa_seq_df = pd.DataFrame()
+    print("now loop through the dataset to generate all three cdrs")
+
+    for idx, entry in tqdm(dataset.iterrows()):
+        tcr = schema.make_tcr_from_components(
+            trav_symbol=entry["TRAV"],
+            junction_a_sequence=entry["CDR3A"],
+            trbv_symbol=entry["TRBV"],
+            junction_b_sequence=entry["CDR3B"]
+        )
+
+        CDR1A.append(tcr.cdr1a_sequence)
+        CDR2A.append(tcr.cdr2a_sequence)
+        CDR1B.append(tcr.cdr1b_sequence)
+        CDR2B.append(tcr.cdr2b_sequence)
+
+    aa_seq_df["CDR1A"] = pd.Series(CDR1A)
+    aa_seq_df["CDR2A"] = pd.Series(CDR2A)
+    aa_seq_df["CDR1B"] = pd.Series(CDR1B)
+    aa_seq_df["CDR2B"] = pd.Series(CDR2B)
+    aa_seq_df["CDR3A"] = dataset["CDR3A"].copy()
+    aa_seq_df["CDR3B"] = dataset["CDR3B"].copy()
+    aa_seq_df["CD4_or_CD8"] = dataset["CD4_or_CD8"].copy()
+
+    return aa_seq_df
+
 
 pre_selected_dataset = pd.read_csv("/home/minzhetang/Documents/results/distance_phenotype/chunk_dataset/20250713/dataset_corresponding_to_chunk_0.csv.gz")
+# print(pre_selected_dataset.columns)
+pre_selected_dataset = generate_all_three_cdrs(pre_selected_dataset)
 pre_selected_pairs = np.load("/home/minzhetang/Documents/results/distance_phenotype/chunk_dataset/20250713/nn_array_chunk_0.npy")
 
-sub_sample_size = pre_selected_dataset.shape[0]
-
-levenshtein_array = np.zeros((sub_sample_size, sub_sample_size), dtype=np.uint16)
+# print(pre_selected_pairs.shape)
 
 cdrs = ["CDR1A", "CDR2A", "CDR3A", "CDR1B", "CDR2B", "CDR3B"]
+levenshtein_phenotype_correlation_dict = {}
+
+for i in tqdm(range(pre_selected_pairs.shape[0])):
+    tcr1, tcr2, _ = pre_selected_pairs[i, :]
+    total_distance = 0
+    for cdr in cdrs:
+        total_distance += distance(pre_selected_dataset.iloc[tcr1][cdr], pre_selected_dataset.iloc[tcr2][cdr])
+
+    is_consistent = 0 if pre_selected_dataset.iloc[tcr1]["CD4_or_CD8"] == pre_selected_dataset.iloc[tcr2]["CD4_or_CD8"] else 1
+
+    if total_distance not in levenshtein_phenotype_correlation_dict.keys():
+        levenshtein_phenotype_correlation_dict[total_distance] = [0, 0]
+    levenshtein_phenotype_correlation_dict[total_distance][is_consistent] += 1
+
+print(levenshtein_phenotype_correlation_dict)
+pd.DataFrame(levenshtein_phenotype_correlation_dict).to_csv(f"{running_time_stamp}_edit_distance_phenotype_correlations_from_filtered_tcr_pairs.csv.gz", index=False)
 
 
-for i in tqdm(range(sub_sample_size)):
-    for j in range(i, sub_sample_size):
-        total_distance = 0
-        for cdr in cdrs:
-            total_distance += distance(dataset.iloc[i][cdr], dataset.iloc[j][cdr])
-            
-        levenshtein_array[i, j] = total_distance
     # np.save(f"{running_time_stamp}_levenshtein_slice_{i}", levenshtein_array[i, :])
 
-print(levenshtein_array)
-np.save(f"{running_time_stamp}_levenshtein_array_{sub_sample_size}", levenshtein_array)
+
+# print(levenshtein_array)
+# np.save(f"{running_time_stamp}_levenshtein_array_{sample_size}", levenshtein_array)

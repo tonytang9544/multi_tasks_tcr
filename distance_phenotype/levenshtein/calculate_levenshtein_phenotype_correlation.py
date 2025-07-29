@@ -17,10 +17,9 @@ sample_size, _ = levenshtein_array.shape
 
 for i in tqdm(range(sample_size)):
     for j in range(i, sample_size):
-        if dataset.iloc[i]["CD4_or_CD8"] == dataset.iloc[j]["CD4_or_CD8"]:
-            correlation_array[0, levenshtein_array[i, j]] += 1
-        else:
-            correlation_array[1, levenshtein_array[i, j]] += 1
+        is_consistent = 0 if dataset.iloc[i]["CD4_or_CD8"] == dataset.iloc[j]["CD4_or_CD8"] else 1
+        correlation_array[is_consistent, levenshtein_array[i, j]] += 1
+
 
 print(correlation_array)
 np.save(f"{running_time_stamp}_correlation_array", correlation_array)
