@@ -18,12 +18,20 @@ def generate_all_three_cdrs(dataset: pd.DataFrame):
 
     aa_seq_df = pd.DataFrame()
 
-    for idx, entry in dataset.iterrows():
+    # for idx, entry in dataset.iterrows():
+    #     tcr = schema.make_tcr_from_components(
+    #         trav_symbol=entry["TRAV"],
+    #         junction_a_sequence=entry["CDR3A"],
+    #         trbv_symbol=entry["TRBV"],
+    #         junction_b_sequence=entry["CDR3B"]
+    #     )
+
+    for entry in dataset.itertuples():
         tcr = schema.make_tcr_from_components(
-            trav_symbol=entry["TRAV"],
-            junction_a_sequence=entry["CDR3A"],
-            trbv_symbol=entry["TRBV"],
-            junction_b_sequence=entry["CDR3B"]
+            trav_symbol=entry.TRAV,
+            junction_a_sequence=entry.CDR3A,
+            trbv_symbol=entry.TRBV,
+            junction_b_sequence=entry.CDR3B
         )
 
         CDR1A.append(tcr.cdr1a_sequence)
