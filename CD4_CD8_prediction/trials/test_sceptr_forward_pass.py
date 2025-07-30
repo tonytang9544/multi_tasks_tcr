@@ -68,7 +68,7 @@ def tokenise_each_entry(entry: pd.Series):
     return:
         tokenised single vector representing the entire TCR
     '''
-    initial_cls_vector = (AminoAcidTokenIndex.CLS, 0, 0, 0)
+    initial_cls_vector = (AminoAcidTokenIndex.CLS.value, 0, 0, 0)
 
     tokenised = []
     tokenised.append(initial_cls_vector)
@@ -76,12 +76,12 @@ def tokenise_each_entry(entry: pd.Series):
     for k, v in MyCdrCompartmentIndex.items():
         tokenised.extend(
             list(zip(
-                (
-                    [AminoAcidTokenIndex[aa] for aa in entry[k]],       # token_indices 
+                
+                    [AminoAcidTokenIndex[aa].value for aa in entry[k]],       # token_indices 
                     [idx for idx, _ in enumerate(entry[k], start=1)],   # token_positions
                     [len(entry[k]) for _ in entry[k]],                  # cdr_length
                     [v for _ in entry[k]]                               # compartment_index
-                )
+                
             ))
         )
 
@@ -99,10 +99,11 @@ def cdr_tokenise(df: pd.DataFrame):
     '''
     tokenised = []
     for i, entry in df.iterrows():
-        tokenised.append(tokenise_each_entry(entry))
+        tokenised.append(torch.tensor(tokenise_each_entry(entry)))
+    print(tokenised)
     
     padded_batch = utils.rnn.pad_sequence(
-                sequences=tokenised_tcrs,
+                sequences=tokenised,
                 batch_first=True,
                 padding_value=0,
             ) 
@@ -139,15 +140,17 @@ tokenised_tcrs = tcr_series.apply(lambda tcr: CdrTokeniser().tokenise(tcr)).toli
 # print([tokenised_tcrs[i] - tokenised_tcrs_2[i] for i in range(4)])
 # # proves equivalency
 
+# tokenised_first_entry = tokenise_each_entry(aa_sequences.iloc[0])
+# print(tokenised_first_entry)
 tokenised_tcrs_4 = cdr_tokenise(aa_sequences)
 print(tokenised_tcrs_4)
 
 # print(tokenised_tcrs)
 # padded_batch = utils.rnn.pad_sequence(
-#                 sequences=tokenised_tcrs,
+#                 sequences=tokenised_tcrs_1,
 #                 batch_first=True,
 #                 padding_value=0,
-# #             )#.to(model._device)
+#             ).to(model._device)
 # print(padded_batch - tokenised_tcrs_4)
 output = model._bert.get_vector_representations_of(tokenised_tcrs_4.to(model._device))
 print(output)

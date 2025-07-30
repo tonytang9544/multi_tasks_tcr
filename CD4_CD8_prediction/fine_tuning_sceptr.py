@@ -1,101 +1,51 @@
 import pandas as pd
-import numpy as np 
-import torch
 from torchinfo import summary
 
-import sceptr
-from libtcrlm import schema
-from libtcrlm.tokeniser.token_indices import DefaultTokenIndex
+# import sceptr
+# from libtcrlm import schema
+# from libtcrlm.tokeniser.token_indices import DefaultTokenIndex
 
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.preprocessing import LabelEncoder
-from sklearn.metrics import roc_auc_score, RocCurveDisplay
-import matplotlib.pyplot as plt
-from imblearn.under_sampling import RandomUnderSampler
+# from sklearn.model_selection import train_test_split
+# from sklearn.preprocessing import StandardScaler
+# from sklearn.preprocessing import LabelEncoder
+# from sklearn.metrics import roc_auc_score, RocCurveDisplay
+# import matplotlib.pyplot as plt
+# from imblearn.under_sampling import RandomUnderSampler
 
-from torch.utils.data import DataLoader, TensorDataset
-import torch.nn as nn
-import torch.optim as optim
-import torch.nn.functional as F
+# from torch.utils.data import DataLoader, TensorDataset
+# import torch.nn as nn
+# import torch.optim as optim
+# import torch.nn.functional as F
 
-import pickle
+# from torch.nn import utils
+# from libtcrlm.tokeniser.token_indices import AminoAcidTokenIndex
 
-
+from dataset_utils import generate_all_three_cdrs
+from sceptrFineTuneModel import SceptrFineTuneModel, cdr_tokenise
 
 CD_label_col = "CD4_or_CD8"
 
-tcr_data_path = "~/Documents/results/data_preprocessing/TABLO/CD4_CD8_sceptr.csv.gz"
-
+tcr_data_path = "~/Documents/results/data_preprocessing/TABLO/CD4_CD8_sceptr_nr_cdrs.csv.gz"
 
 tc_df = pd.read_csv(tcr_data_path).iloc[0:500]
+print(tc_df.head())
 
-# data = []
-# for entry in tc_df.iterrows():
-#     data.append({'subject': entry["donor"], CD_label_col: entry[CD_label_col], 'embedding': sceptr_model._tokeniser.tokenize(entry)})
 
 batch_s = 1024*4
 hidden_dim_1 = 128*2
 hidden_dim_2 = 64*4
 
-class SceptrFineTuneClass(nn.Module):
-    def __init__(self, input_dim=64):
-        '''
-        input_dim=64 is the output dimension of the default Sceptr model
-        '''
-        super().__init__()
-        self.sceptr_model = sceptr.variant.default()
-        
-        # self.fc1 = nn.Linear(input_dim, hidden_dim_1).to(self.sceptr_model._device)
-        # self.dropout = nn.Dropout(0.1).to(self.sceptr_model._device)
-        # self.fc2 = nn.Linear(hidden_dim_1, hidden_dim_2).to(self.sceptr_model._device)
-        # self.fc3 = nn.Linear(hidden_dim_2, 1).to(self.sceptr_model._device)
-
-        self.fc1 = nn.Linear(input_dim, hidden_dim_1)
-        self.dropout = nn.Dropout(0.1)
-        self.fc2 = nn.Linear(hidden_dim_1, hidden_dim_2)
-        self.fc3 = nn.Linear(hidden_dim_2, 1)
-
-    def forward(self, x):
-        x = F.relu(self.fc1(x))
-        x = self.dropout(x)
-        x = F.relu(self.fc2(x))
-        x = self.dropout(x)
-        x = F.sigmoid(self.fc3(x))
-        return x
     
-model = SceptrFineTuneClass()
-model = model.to(model.sceptr_model._device)
+model = SceptrFineTuneModel()
+model = model.to(model.device)
 summary(model)
 
-# subjects = tc_df['donor'].unique()
 
-# subject_embeddings = {}
-# for subject in subjects:
-#     # Filter DataFrame for the current subject
-#     df_subject = tc_df[tc_df['donor'] == subject]
-    
-#     # Compute embeddings
-#     embeddings = sceptr_model._tokeniser.tokenize(df_subject)
-#     # embeddings = sceptr.calc_vector_representations(df_subject)
+aa_sequences = generate_all_three_cdrs(tc_df)
+print(model(cdr_tokenise(aa_sequences).to(model.device)).shape)
 
-#     # Store embeddings and labels in the dictionary
-#     subject_embeddings[subject] = {
-#         "embeddings": embeddings,
-#         "labels": df_subject[CD_label_col].to_numpy()
-#     }
-
-# # Flatten the dictionary into a list of rows
-# data = []
-# for subject, content in subject_embeddings.items():
-#     embeddings = content['embeddings']
-#     labels = content['labels']
-#     for embedding, label in zip(embeddings, labels):
-#         data.append({'subject': subject, CD_label_col: label, 'embedding': embedding})
-
-
-embed_df = pd.DataFrame(data)
-print(embed_df)
+# embed_df = pd.DataFrame(data)
+# print(embed_df)
 
 # label_encoder = LabelEncoder()
 # embed_df['labels_encoded'] = label_encoder.fit_transform(embed_df[CD_label_col])
@@ -130,29 +80,6 @@ print(embed_df)
 # test_dataset = TensorDataset(X_test, y_test)
 
 
-# batch_s = 1024*4
-# hidden_dim_1 = 128*2
-# hidden_dim_2 = 64*4
-
-
-# train_loader = DataLoader(train_dataset, batch_size=batch_s, shuffle=True)
-# test_loader = DataLoader(test_dataset, batch_size=batch_s, shuffle=False)
-
-# class TCellClassifier(nn.Module):
-#     def __init__(self, input_dim):
-#         super(TCellClassifier, self).__init__()
-#         self.fc1 = nn.Linear(input_dim, hidden_dim_1)
-#         self.dropout = nn.Dropout(0.1)
-#         self.fc2 = nn.Linear(hidden_dim_1, hidden_dim_2)
-#         self.fc3 = nn.Linear(hidden_dim_2, 1)
-    
-#     def forward(self, x):
-#         x = F.relu(self.fc1(x))
-#         x = self.dropout(x)
-#         x = F.relu(self.fc2(x))
-#         x = self.dropout(x)
-#         x = F.sigmoid(self.fc3(x))
-#         return x
 
     
 # input_dim = X_train.shape[1]
