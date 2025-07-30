@@ -94,19 +94,27 @@ def cdr_tokenise(df: pd.DataFrame):
 
 
 class SceptrFineTuneModel(nn.Module):
-    def __init__(self, input_dim=64, hidden_dim_1=128, hidden_dim_2=64):
+    def __init__(self, input_dim=64, hidden_dim_1=128, hidden_dim_2=64, device=None):
         '''
         input_dim=64 is the output dimension of the default Sceptr model
+        device=None will move the model to the default device initialised with the Sceptr model:
+            normally if CUDA available, move to CUDA, otherwise stay at CPU
         '''
         super().__init__()
         sceptr_model = sceptr.variant.default()
-        self.bert = sceptr_model._bert
-        self.device = sceptr_model._device
+        
+        if device is None:
+            self.device = sceptr_model._device
+        else:
+            self.device = device
 
-        self.fc1 = nn.Linear(input_dim, hidden_dim_1)
-        self.dropout = nn.Dropout(0.1)
-        self.fc2 = nn.Linear(hidden_dim_1, hidden_dim_2)
-        self.fc3 = nn.Linear(hidden_dim_2, 1)
+        self.bert = sceptr_model._bert.to(self.device)
+
+        self.fc1 = nn.Linear(input_dim, hidden_dim_1).to(self.device)
+        self.dropout = nn.Dropout(0.1).to(self.device)
+        self.fc2 = nn.Linear(hidden_dim_1, hidden_dim_2).to(self.device)
+        self.fc3 = nn.Linear(hidden_dim_2, 1).to(self.device)
+
 
     def forward(self, x):
         x = self.bert.get_vector_representations_of(x)

@@ -37,12 +37,11 @@ hidden_dim_2 = 64*4
 
     
 model = SceptrFineTuneModel()
-model = model.to(model.device)
 summary(model)
 
 
 aa_sequences = generate_all_three_cdrs(tc_df)
-print(model(cdr_tokenise(aa_sequences).to(model.device)).shape)
+print(model(cdr_tokenise(aa_sequences).to("cuda")).shape)
 
 # embed_df = pd.DataFrame(data)
 # print(embed_df)
