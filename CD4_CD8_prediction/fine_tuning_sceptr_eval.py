@@ -43,7 +43,7 @@ train, test = train_test_split(tc_df, test_size=0.2, random_state=42)
 train, val = train_test_split(train, test_size=0.2, random_state=42)
 
 criterion = nn.BCELoss()
-optimizer = optim.Adam(model.parameters(), lr=3e-4)
+optimizer = optim.Adam(model.parameters(), lr=1e-3)
 # scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
 
 num_epochs = 20
@@ -52,46 +52,47 @@ num_train_batches = int(train.shape[0] / batch_size)
 num_val_batches = int(val.shape[0] / batch_size)
 num_test_batches = int(test.shape[0] / batch_size)
 
-for epoch in range(num_epochs):
-    model.train()
-    running_loss = 0.0
-    for i in range(num_train_batches):
-        # Clear the gradients
-        optimizer.zero_grad()
-        batch = train.iloc[i*batch_size: (i+1)*batch_size]
+# for epoch in range(num_epochs):
+#     model.train()
+#     running_loss = 0.0
+#     for i in range(num_train_batches):
+#         # Clear the gradients
+#         optimizer.zero_grad()
+#         batch = train.iloc[i*batch_size: (i+1)*batch_size]
         
-        # Forward pass
-        outputs = model(cdr_tokenise(batch).to(model.device)).squeeze()
-        loss = criterion(outputs, torch.tensor(batch["label"].to_numpy(), dtype=torch.float32).to(model.device))
+#         # Forward pass
+#         outputs = model(cdr_tokenise(batch).to(model.device)).squeeze()
+#         loss = criterion(outputs, torch.tensor(batch["label"].to_numpy(), dtype=torch.float32).to(model.device))
         
-        # Backward pass and optimization
-        loss.backward()
-        optimizer.step()
+#         # Backward pass and optimization
+#         loss.backward()
+#         optimizer.step()
         
-        running_loss += loss.item()
-    # scheduler.step()
+#         running_loss += loss.item()
+#     # scheduler.step()
     
-    print(f'Epoch [{epoch+1}/{num_epochs}], Train Loss: {running_loss/batch_size:.4f}')
+#     print(f'Epoch [{epoch+1}/{num_epochs}], Train Loss: {running_loss/batch_size:.4f}')
 
-    model.eval()
-    with torch.no_grad():
-        running_loss = 0.0
+#     model.eval()
+#     with torch.no_grad():
+#         running_loss = 0.0
 
-        for i in range(num_val_batches):
-            batch = val.iloc[i*batch_size: (i+1)*batch_size]
+#         for i in range(num_val_batches):
+#             batch = val.iloc[i*batch_size: (i+1)*batch_size]
             
-            # Forward pass
-            outputs = model(cdr_tokenise(batch).to(model.device)).squeeze()
-            loss = criterion(outputs, torch.tensor(batch["label"].to_numpy(), dtype=torch.float32).to(model.device))
-            running_loss += loss.item()
-        print(f'Epoch [{epoch+1}/{num_epochs}], Val Loss: {running_loss/batch_size:.4f}')
+#             # Forward pass
+#             outputs = model(cdr_tokenise(batch).to(model.device)).squeeze()
+#             loss = criterion(outputs, torch.tensor(batch["label"].to_numpy(), dtype=torch.float32).to(model.device))
+#             running_loss += loss.item()
+#         print(f'Epoch [{epoch+1}/{num_epochs}], Val Loss: {running_loss/batch_size:.4f}')
 
 
-print('Training complete')
+# print('Training complete')
 
-torch.save(model, "model.pt")
+# torch.save(model, "model.pt")
 
-
+# model = SceptrFineTuneModel()
+model = torch.load("model.pt", weights_only=False)
 
 model.eval()
 

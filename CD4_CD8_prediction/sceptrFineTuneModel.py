@@ -4,8 +4,11 @@ from torch.nn import utils
 import torch.nn.functional as F
 
 import pandas as pd
+from torchinfo import summary
 
 import sceptr
+
+from dataset_utils import generate_all_three_cdrs
 
 MyAminoAcidTokenIndex = {
     "NULL" : 0,
@@ -121,6 +124,22 @@ class SceptrFineTuneModel(nn.Module):
         x = F.relu(self.fc1(x))
         x = self.dropout(x)
         x = F.relu(self.fc2(x))
-        x = self.dropout(x)
         x = F.sigmoid(self.fc3(x))
         return x
+    
+if __name__ == "__main__":
+    tcrs = pd.DataFrame(
+    data = {
+            "TRAV": ["TRAV38-1*01", "TRAV3*01", "TRAV13-2*01", "TRAV38-2/DV8*01"],
+            "CDR3A": ["CAHRSAGGGTSYGKLTF", "CAVDNARLMF", "CAERIRKGQVLTGGGNKLTF", "CAYRSAGGGTSYGKLTF"],
+            "TRBV": ["TRBV2*01", "TRBV25-1*01", "TRBV9*01", "TRBV2*01"],
+            "CDR3B": ["CASSEFQGDNEQFF", "CASSDGSFNEQFF", "CASSVGDLLTGELFF", "CASSPGTGGNEQYF"],
+        },
+        index = [0,1,2,3]
+    )
+
+    aa_sequences = generate_all_three_cdrs(tcrs)
+
+    model = SceptrFineTuneModel()
+    print(summary(model))
+    print(model(cdr_tokenise(aa_sequences).to(model.device)))
