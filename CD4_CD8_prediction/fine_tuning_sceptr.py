@@ -43,7 +43,7 @@ train, test = train_test_split(tc_df, test_size=0.2, random_state=42)
 train, val = train_test_split(train, test_size=0.2, random_state=42)
 
 criterion = nn.BCELoss()
-optimizer = optim.Adam(model.parameters(), lr=3e-4)
+optimizer = optim.Adam(model.parameters(), lr=3e-5)
 # scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
 
 num_epochs = 20
