@@ -11,16 +11,13 @@ import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import torch.nn.functional as F
 
-from tqdm import tqdm
-
-
-from sceptrFineTuneModel import SceptrFineTuneModel
-from sceptr_tokeniser import sceptr_tokenise
+import sceptr
 
 
 train_config_dict = {
-    "lr": 2e-4,
+    "lr": 1e-3,
     "num_epoch": 30,
     "classifier_hid_dim": 128,
     "has_scheduler": False,
@@ -33,24 +30,38 @@ print(train_config_dict)
 
 CD_label_col = "CD4_or_CD8"
 
+# tcr_data_path = "~/Documents/results/data_preprocessing/TABLO/CD4_CD8_sceptr.csv.gz"
 tcr_data_path = train_config_dict["dataset_path"]
 
-tc_df = pd.read_csv(tcr_data_path).dropna().reset_index(drop=True)
-# print(tc_df.head())
+tc_df = pd.read_csv(tcr_data_path)
 
+# print(sceptr.calc_vector_representations(tc_df))
+
+tc_df["label"] = LabelEncoder().fit_transform(tc_df[CD_label_col])
+
+train_val, test = train_test_split(tc_df, test_size=0.2, random_state=42)
+
+train, val = train_test_split(train_val, test_size=0.2, random_state=42)
+
+sceptr_model = sceptr.variant.default()
+
+class TCellClassifier(nn.Module):
+    def __init__(self, input_dim=64, hidden_dim=128):
+        super(TCellClassifier, self).__init__()
+        self.fc1 = nn.Linear(input_dim, hidden_dim)
+        self.dropout = nn.Dropout(0.1)
+        self.fc2 = nn.Linear(hidden_dim, 1)
     
-model = SceptrFineTuneModel(hidden_dim_1=train_config_dict["classifier_hid_dim"])
-summary(model)
+    def forward(self, x):
+        x = torch.tensor(sceptr_model.calc_vector_representations(x))
+        x = F.relu(self.fc1(x))
+        x = self.dropout(x)
+        x = F.sigmoid(self.fc2(x))
+        return x
+    
+model = TCellClassifier()
+print(summary(model))
 
-
-# aa_sequences = generate_all_three_cdrs(tc_df)
-# print(model(sceptr_tokenise(aa_sequences).to("cuda")).shape)
-
-tc_df["label"] = LabelEncoder().fit_transform(tc_df["CD4_or_CD8"])
-
-train, test = train_test_split(tc_df, test_size=0.2, random_state=42)
-
-train, val = train_test_split(train, test_size=0.2, random_state=42)
 
 criterion = nn.BCELoss()
 optimizer = optim.Adam(model.parameters(), lr=train_config_dict["lr"])
@@ -73,8 +84,8 @@ for epoch in range(num_epochs):
         batch = train.iloc[i*batch_size: (i+1)*batch_size]
         
         # Forward pass
-        outputs = model(sceptr_tokenise(batch).to(model.device)).squeeze()
-        loss = criterion(outputs, torch.tensor(batch["label"].to_numpy(), dtype=torch.float32).to(model.device))
+        outputs = model(batch).to(sceptr_model._device).squeeze()
+        loss = criterion(outputs, torch.tensor(batch["label"].to_numpy(), dtype=torch.float32).to(sceptr_model._device))
         
         # Backward pass and optimization
         loss.backward()
@@ -93,8 +104,8 @@ for epoch in range(num_epochs):
             batch = val.iloc[i*batch_size: (i+1)*batch_size]
             
             # Forward pass
-            outputs = model(sceptr_tokenise(batch).to(model.device)).squeeze()
-            loss = criterion(outputs, torch.tensor(batch["label"].to_numpy(), dtype=torch.float32).to(model.device))
+            outputs = model(batch).to(sceptr_model._device).squeeze()
+            loss = criterion(outputs, torch.tensor(batch["label"].to_numpy(), dtype=torch.float32).to(sceptr_model._device))
             running_loss += loss.item()
         curr_val_loss = running_loss/num_val_batches
         print(f'Epoch [{epoch+1}/{num_epochs}], Val Loss: {curr_val_loss:.4f}')
@@ -113,7 +124,7 @@ all_labels = []
 with torch.no_grad():
     for i in range(num_test_batches):
         batch = test.iloc[i*batch_size: (i+1)*batch_size]
-        outputs = model(sceptr_tokenise(batch).to(model.device)).squeeze()
+        outputs = model(batch).to(sceptr_model._device).squeeze()
         all_preds.extend(outputs.cpu().numpy())
         all_labels.extend(batch["label"].to_numpy())
 

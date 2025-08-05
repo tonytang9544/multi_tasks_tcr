@@ -22,7 +22,7 @@ import pickle
 
 CD_label_col = "CD4_or_CD8"
 
-tcr_data_path = "~/Documents/results/data_preprocessing/TABLO/CD4_CD8_sceptr.csv.gz"
+tcr_data_path = "~/Documents/results/data_preprocessing/TABLO/CD4_CD8_sceptr_nr_cdrs.csv.gz"
 
 
 tc_df = pd.read_csv(tcr_data_path)
@@ -100,22 +100,19 @@ class TCellClassifier(nn.Module):
         super(TCellClassifier, self).__init__()
         self.fc1 = nn.Linear(input_dim, hidden_dim_1)
         self.dropout = nn.Dropout(0.1)
-        self.fc2 = nn.Linear(hidden_dim_1, hidden_dim_2)
-        self.fc3 = nn.Linear(hidden_dim_2, 1)
+        self.fc2 = nn.Linear(hidden_dim_1, 1)
     
     def forward(self, x):
         x = F.relu(self.fc1(x))
         x = self.dropout(x)
-        x = F.relu(self.fc2(x))
-        x = self.dropout(x)
-        x = F.sigmoid(self.fc3(x))
+        x = F.sigmoid(self.fc2(x))
         return x
 
     
 input_dim = X_train.shape[1]
 model = TCellClassifier(input_dim)
 criterion = nn.BCELoss()
-optimizer = optim.Adam(model.parameters(), lr=1e-2)
+optimizer = optim.Adam(model.parameters(), lr=1e-4)
 # scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
 
 num_epochs = 20

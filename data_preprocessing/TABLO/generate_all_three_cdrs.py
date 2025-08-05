@@ -1,7 +1,7 @@
 from libtcrlm import schema
 import pandas as pd
 
-tcr_data_path = "/Users/tangm/The Francis Crick Dropbox/Minzhe Tang/Tony/After-PhD/Machine_learning_MSc/UCL-AI_for_biomed/Course_material/thesis_project/TCR_project/dataset/CD4_CD8_sceptr.csv.gz"
+tcr_data_path = "~/Documents/results/data_preprocessing/CD4_CD8_sceptr.csv.gz"
 
 dataset = pd.read_csv(tcr_data_path)
 
@@ -11,7 +11,7 @@ def generate_all_three_cdrs(dataset: pd.DataFrame):
     CDR1B = []
     CDR2B = []
 
-    aa_seq_df = pd.DataFrame()
+    aa_seq_df = dataset.copy()
 
     for idx, entry in dataset.iterrows():
         tcr = schema.make_tcr_from_components(
@@ -30,8 +30,7 @@ def generate_all_three_cdrs(dataset: pd.DataFrame):
     aa_seq_df["CDR2A"] = pd.Series(CDR2A)
     aa_seq_df["CDR1B"] = pd.Series(CDR1B)
     aa_seq_df["CDR2B"] = pd.Series(CDR2B)
-    aa_seq_df["CDR3A"] = dataset["CDR3A"].copy()
-    aa_seq_df["CDR3B"] = dataset["CDR3B"].copy()
+
 
     return aa_seq_df
     
@@ -39,5 +38,4 @@ def generate_all_three_cdrs(dataset: pd.DataFrame):
 
 dataset = generate_all_three_cdrs(dataset)
 
-cdr_dataset_path = "/Users/tangm/The Francis Crick Dropbox/Minzhe Tang/Tony/After-PhD/Machine_learning_MSc/UCL-AI_for_biomed/Course_material/thesis_project/TCR_project/dataset/CD4_CD8_sceptr_cdrs.csv.gz"
-dataset.to_csv(cdr_dataset_path, index=False)
+dataset.to_csv("CD4_CD8_sceptr_nr_cdrs.csv.gz", index=False)

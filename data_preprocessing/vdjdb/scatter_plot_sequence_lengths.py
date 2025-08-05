@@ -10,6 +10,9 @@ VDJDB_dataset = pd.read_csv("~/Documents/dataset/20250610VDJDB.csv")
 
 print(VDJDB_dataset.columns)
 
+vgene_cols = ['valpha.gene', 'valpha.allele']
+print(VDJDB_dataset[vgene_cols].head())
+
 
 useful_cols = ["cdr3alpha.id", "cdr3beta.id", "epitope.id"]
 print(VDJDB_dataset[useful_cols].head())
