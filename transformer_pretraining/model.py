@@ -31,17 +31,17 @@ class PositionalEncoding(nn.Module):
         return self.dropout(x)
 
 
-class TCRtransformer(nn.Module):
+class TCR_peptide_model(nn.Module):
     def __init__(
             self, 
-            vocab_size=26, 
-            transformer_model_dim=64, 
-            feedforward_dim=256, 
-            nhead=8, 
-            num_layer=3, 
-            dropout=0.1, 
-            batch_first=True,
-            max_seq_len=200
+            vocab_size: int = 26, 
+            transformer_model_dim: int = 64, 
+            feedforward_dim: int = 256, 
+            nhead: int = 8, 
+            num_layer: int = 3, 
+            dropout: float = 0.1, 
+            batch_first: bool = True,
+            max_seq_len: int = 200
         ):
         '''
         transformer_model_dim=64 is the dimension of the transformer embedding
@@ -100,7 +100,7 @@ if __name__ == "__main__":
             tokenize_chinese_chars=False,
             padding_side="right",
         )  
-    model = TCRtransformer(tokenizer.vocab_size)
+    model = TCR_peptide_model(tokenizer.vocab_size)
     print(summary(model))
     print(tokenizer(["E E A P U, A F G", "E E A P U, A F G", "E E A P U, A F G E F A"], ["G F P", "A A A A A", "C F G"], return_tensors="pt", padding=True))
     print(model(tokenizer(["E E A P U, A F G", "E E A P U, A F G", "E E A P U, A F G E F A"], ["G F P", "A A A A A", "C F G"], return_tensors="pt", padding=True)).shape)

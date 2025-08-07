@@ -1,6 +1,9 @@
 import torch
 import transformers
 
+import pandas as pd
+
+
 def random_aa_masking(
         input_ids, 
         tokeniser,
@@ -24,9 +27,24 @@ def random_aa_masking(
         high=20)
     
     masked_labels = input_ids.clone()
-    masked_labels[(final_no_change_chance < rand_num) & ~special_tokens_mask] = -100 # for pytorch loss function to ignore
+    masked_labels[final_no_change_chance < rand_num] = -100 # for pytorch loss function to ignore
 
     return masked_input, masked_labels
+
+
+def generate_full_tcr_sample_peptide_and_generate_labels(df: pd.DataFrame, batch_size=128):
+    dataset = df.sample(batch_size)
+    # cdrs = ["CDR1A", "CDR2A", "CDR3A", "CDR1B", "CDR2B", "CDR3B"]
+    all_CDRs = dataset["CDR1A"] + "," + dataset["CDR2A"] + dataset["CDR3A"] + dataset["CDR1B"] + dataset["CDR2B"] + dataset["CDR3B"]
+    white_spaced_TCRs = all_CDRs.apply(lambda x: " ".join(x)).to_list()
+    target_epitope = dataset["epitope"].apply(lambda x: " ".join(x))
+    random_epitope = df.sample(batch_size)["epitope"].apply(lambda x: " ".join(x))
+    random_mask = torch.rand(batch_size) > 0.5
+    mixed_epitope = target_epitope.where(random_mask, random_epitope)
+    labels = torch.ones(batch_size, dtype=torch.int8)
+    labels[random_mask] = 0
+    return white_spaced_TCRs, mixed_epitope, labels
+
 
 if __name__ == "__main__":
     a = torch.randint(26, (3, 10))
