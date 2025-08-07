@@ -11,8 +11,6 @@ import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import transformers
-from tqdm import tqdm
 
 
 from transformerModel import TransformerTCRModel
@@ -20,14 +18,14 @@ from sceptr_tokeniser import sceptr_tokenise
 
 
 train_config_dict = {
-    "lr": 3e-4,
-    "num_epoch": 30,
+    "lr": 1e-3,
+    "num_epoch": 50,
     "classifier_hid_dim": 128,
-    "has_scheduler": True,
+    "has_scheduler": False,
     "batch_size": 1024,
     "dataset_path": "~/Documents/results/data_preprocessing/TABLO/CD4_CD8_sceptr_nr_cdrs.csv.gz",
     "num_warmup_proportion": 0.1,
-    "max_grad_norm": 1
+    "max_grad_norm": None
 }
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -67,13 +65,15 @@ num_val_batches = int(val.shape[0] / batch_size)
 num_test_batches = int(test.shape[0] / batch_size)
 
 criterion = nn.BCELoss()
-optimizer = optim.AdamW(model.parameters(), lr=train_config_dict["lr"])
-total_steps = num_epochs*num_train_batches
-scheduler = transformers.optimization.get_cosine_schedule_with_warmup(
-    optimizer, 
-    num_warmup_steps=int(train_config_dict["num_warmup_proportion"]*total_steps), 
-    num_training_steps=total_steps
-)
+# optimizer = optim.AdamW(model.parameters(), lr=train_config_dict["lr"])
+# total_steps = num_epochs*num_train_batches
+# scheduler = transformers.optimization.get_cosine_schedule_with_warmup(
+#     optimizer, 
+#     num_warmup_steps=int(train_config_dict["num_warmup_proportion"]*total_steps), 
+#     num_training_steps=total_steps
+# )
+
+optimizer = optim.Adam(model.parameters(), lr=train_config_dict["lr"])
 
 best_val_loss = np.inf
 
@@ -91,11 +91,12 @@ for epoch in range(num_epochs):
         
         # Backward pass and optimization
         loss.backward()
-        nn.utils.clip_grad_norm_(model.parameters(), train_config_dict["max_grad_norm"])
+        if train_config_dict["max_grad_norm"] is not None:
+            nn.utils.clip_grad_norm_(model.parameters(), train_config_dict["max_grad_norm"])
         optimizer.step()
         
         running_loss += loss.item()
-        scheduler.step()
+        # scheduler.step()
     
     print(f'Epoch [{epoch+1}/{num_epochs}], Train Loss: {running_loss/num_train_batches:.4f}')
 

@@ -15,7 +15,7 @@ class TransformerTCRModel(nn.Module):
         super().__init__()
 
         self.transformer = nn.TransformerEncoder(
-            nn.TransformerEncoderLayer(d_model=transformer_model_dim, nhead=nhead),
+            nn.TransformerEncoderLayer(d_model=transformer_model_dim, nhead=nhead, batch_first=True),
             num_layers=num_layer
         )
         self.amino_acid_projection = nn.Linear(embedding_dim, transformer_model_dim)
@@ -26,7 +26,7 @@ class TransformerTCRModel(nn.Module):
 
     def forward(self, x):
         x = self.amino_acid_projection(x)
-        x = self.transformer(x)[:, 0, :]    # only get the CLS token
+        x = self.transformer(x)[:, 0, :]    # only get the CLS token, only works with batch_first=True!
         x = self.dropout(self.fc1(x))
         x = F.sigmoid(self.fc2(x))
         return x

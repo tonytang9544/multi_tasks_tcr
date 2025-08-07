@@ -49,10 +49,10 @@ def generate_all_three_cdrs(dataset: pd.DataFrame):
     return aa_seq_df
 
 
-pre_selected_dataset = pd.read_csv("/home/minzhetang/Documents/results/distance_phenotype/chunk_dataset/20250713/dataset_corresponding_to_chunk_0.csv.gz")
+pre_selected_dataset = pd.read_csv("20250806_1253_dataset.csv.gz")
 # print(pre_selected_dataset.columns)
 pre_selected_dataset = generate_all_three_cdrs(pre_selected_dataset)
-pre_selected_pairs = np.load("/home/minzhetang/Documents/results/distance_phenotype/chunk_dataset/20250713/nn_array_chunk_0.npy")
+pre_selected_pairs = np.load("20250806_1253_nn_array.npy")
 
 # print(pre_selected_pairs.shape)
 

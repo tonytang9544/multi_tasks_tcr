@@ -8,7 +8,7 @@ import datetime
 running_time_stamp = str(datetime.datetime.now().strftime("%Y%m%d_%H%M"))
 print(running_time_stamp)
 
-saved_counts = pd.read_csv("20250729_1641_edit_distance_phenotype_correlations_from_filtered_tcr_pairs.csv.gz")
+saved_counts = pd.read_csv("20250806_1301_edit_distance_phenotype_correlations_from_filtered_tcr_pairs.csv.gz")
 edit_dist_idx = [int(i) for i in saved_counts.columns]
 saved_counts_array = saved_counts.to_numpy()
 
