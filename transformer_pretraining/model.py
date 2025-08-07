@@ -104,6 +104,7 @@ if __name__ == "__main__":
     print(summary(model))
     print(tokenizer(["E E A P U, A F G", "E E A P U, A F G", "E E A P U, A F G E F A"], ["G F P", "A A A A A", "C F G"], return_tensors="pt", padding=True))
     print(model(tokenizer(["E E A P U, A F G", "E E A P U, A F G", "E E A P U, A F G E F A"], ["G F P", "A A A A A", "C F G"], return_tensors="pt", padding=True)).shape)
+    print(tokenizer.mask_token_id, tokenizer.cls_token)
 
     # pretrain_model = TCRtransformerPretrainer()
     # print(summary(pretrain_model))
