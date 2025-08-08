@@ -1,5 +1,5 @@
 import pandas as pd
 
-VDJDB_dataset = pd.read_csv("~/Documents/dataset/20250610VDJDB.csv")
+VDJDB_dataset = pd.read_csv("~/Documents/results/data_preprocessing/vdjdb/VDJDB_sceptr_nr_cdr.csv")
 
-print(VDJDB_dataset["vbeta.gene"].head())
+print(VDJDB_dataset.head())
