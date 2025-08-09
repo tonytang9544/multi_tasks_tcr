@@ -21,6 +21,9 @@ train_config_dict = {
     "lr": 1e-3,
     "num_epoch": 50,
     "classifier_hid_dim": 128,
+    "transformer_model_dim": 64,
+    "encoder_feedforward_dim": 256,
+    "num_encoder_layers": 6,
     "has_scheduler": False,
     "batch_size": 1024,
     "dataset_path": "~/Documents/results/data_preprocessing/TABLO/CD4_CD8_sceptr_nr_cdrs.csv.gz",
@@ -42,7 +45,12 @@ tc_df = pd.read_csv(tcr_data_path).dropna().reset_index(drop=True)#.iloc[:1000]
 
 
     
-model = TransformerTCRModel(hidden_dim=train_config_dict["classifier_hid_dim"])
+model = TransformerTCRModel(
+    hidden_dim=train_config_dict["classifier_hid_dim"],
+    dim_feedforward=train_config_dict["encoder_feedforward_dim"],
+    num_layer=train_config_dict["num_encoder_layers"],
+    transformer_model_dim=train_config_dict["transformer_model_dim"]
+)
 model = model.to(device)
 summary(model)
 

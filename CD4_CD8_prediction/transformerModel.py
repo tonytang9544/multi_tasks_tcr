@@ -6,7 +6,7 @@ from dataset_utils import generate_all_three_cdrs
 
 
 class TransformerTCRModel(nn.Module):
-    def __init__(self, transformer_model_dim=64, embedding_dim=4, hidden_dim=128, nhead=8, num_layer=1):
+    def __init__(self, transformer_model_dim=64, embedding_dim=4, hidden_dim=128, nhead=8, num_layer=1, dim_feedforward=2048):
         '''
         transformer_model_dim=64 is the dimension of the transformer embedding
         hidden_dim is the dimension of the linear classification layer
@@ -15,7 +15,7 @@ class TransformerTCRModel(nn.Module):
         super().__init__()
 
         self.transformer = nn.TransformerEncoder(
-            nn.TransformerEncoderLayer(d_model=transformer_model_dim, nhead=nhead, batch_first=True),
+            nn.TransformerEncoderLayer(d_model=transformer_model_dim, nhead=nhead, batch_first=True, dim_feedforward=dim_feedforward),
             num_layers=num_layer
         )
         self.amino_acid_projection = nn.Linear(embedding_dim, transformer_model_dim)

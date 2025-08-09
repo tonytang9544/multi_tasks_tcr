@@ -22,10 +22,12 @@ from models import TCR_peptide_model
 from dataset_utils import generate_full_tcr_sample_peptide_and_generate_labels, random_aa_masking
 
 train_config_dict = {
-    "lr": 2e-4,
+    "lr": 1e-4,
     "num_epoch": 30,
+    "num_train_batches": int(2e4),
     "transformer_model_d": 64,
     "has_scheduler": False,
+    # "num_warmup_proportion": 0.1,
     "batch_size": 128,
     "dataset_path": "~/Documents/results/data_preprocessing/vdjdb/VDJDB_sceptr_nr_cdr.csv",
     "device": "cuda" if torch.cuda.is_available() else "cpu",
@@ -62,15 +64,26 @@ train, val = train_test_split(train, test_size=0.2, random_state=42)
 
 joint_params = list(model.parameters()) + list(classifier.parameters()) # for joint training
 
-optimizer = optim.Adam(joint_params, lr=train_config_dict["lr"])
-# scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
+
+
 
 num_epochs = train_config_dict["num_epoch"]
 batch_size = train_config_dict["batch_size"]
 # num_train_batches = int(train.shape[0] / batch_size)
-num_train_batches = int(1e4)
+num_train_batches = train_config_dict["num_train_batches"]
 num_val_batches = int(val.shape[0] / batch_size)
 num_test_batches = int(test.shape[0] / batch_size)
+
+optimizer = optim.Adam(joint_params, lr=train_config_dict["lr"])
+
+# classifier_optimizer = optim.Adam(classifier.parameters(), lr=train_config_dict["lr"])
+# transformer_optimizer = optim.AdamW(model.parameters(), lr=train_config_dict["lr"])
+# total_steps = num_epochs*num_train_batches
+# scheduler = transformers.optimization.get_cosine_schedule_with_warmup(
+#     transformer_optimizer, 
+#     num_warmup_steps=int(train_config_dict["num_warmup_proportion"]*total_steps), 
+#     num_training_steps=total_steps
+# )
 
 best_val_loss = np.inf
 
@@ -80,7 +93,11 @@ for epoch in range(num_epochs):
     running_loss = 0.0
     for i in range(num_train_batches):
         # Clear the gradients
+        # transformer_optimizer.zero_grad()
+        # classifier_optimizer.zero_grad()
         optimizer.zero_grad()
+
+        # Forward pass
         white_spaced_TCRs, mixed_epitope, binding_labels = generate_full_tcr_sample_peptide_and_generate_labels(train, train_config_dict["batch_size"])
         
         tokenised = tokenizer(
@@ -96,22 +113,27 @@ for epoch in range(num_epochs):
             "token_type_ids" : tokenised["token_type_ids"].to(train_config_dict["device"]),
             "attention_mask": tokenised["attention_mask"].to(train_config_dict["device"])
         }
-        # Forward pass
+
         outputs = model(aa_masked_full_input).squeeze()
         pred_binding_labels = F.sigmoid(classifier(outputs[:, 0, :]))
         pred_masked_aa_representations = outputs[aa_mask, :]
-        print(pred_masked_aa_representations.shape)
-        print(model.aa_embedder.weight.shape)
-        pred_masked_aa_tokens = F.softmax(F.cosine_similarity(pred_masked_aa_representations, model.aa_embedder.weight, dim=-1))
+        cos_sim = torch.matmul(pred_masked_aa_representations, model.aa_embedder.weight.T)
+        pred_masked_aa_tokens = F.softmax(cos_sim, dim=-1)
 
-        loss = F.binary_cross_entropy(pred_binding_labels, binding_labels) + F.cross_entropy(pred_masked_aa_tokens, tokenised["input_ids"])
+        loss = F.binary_cross_entropy(
+            pred_binding_labels.squeeze(),
+            binding_labels.to(train_config_dict["device"])) + F.cross_entropy(
+                pred_masked_aa_tokens, 
+                tokenised["input_ids"][aa_mask].to(train_config_dict["device"]))
         
         # Backward pass and optimization
         loss.backward()
+        # transformer_optimizer.step()
+        # classifier_optimizer.step()
         optimizer.step()
         
         running_loss += loss.item()
-    # scheduler.step()
+        # scheduler.step()
     
     print(f'Epoch [{epoch+1}/{num_epochs}], Train Loss: {running_loss/num_train_batches:.4f}')
 
@@ -125,7 +147,7 @@ for epoch in range(num_epochs):
             
             # Forward pass
             white_spaced_TCRs, mixed_epitope, binding_labels = generate_full_tcr_sample_peptide_and_generate_labels(val, train_config_dict["batch_size"])
-        
+            
             tokenised = tokenizer(
                 white_spaced_TCRs,
                 mixed_epitope,
@@ -133,18 +155,24 @@ for epoch in range(num_epochs):
                 padding=True
             )
 
-            masked_aa_tokens, masked_aa_labels, aa_mask = random_aa_masking(tokenised["input_ids"], tokeniser=tokenizer)
+            masked_aa_tokens, masked_aa_labels, aa_mask = random_aa_masking(tokenised["input_ids"], tokenizer=tokenizer)
             aa_masked_full_input = {
                 "input_ids": masked_aa_tokens.to(train_config_dict["device"]),
                 "token_type_ids" : tokenised["token_type_ids"].to(train_config_dict["device"]),
                 "attention_mask": tokenised["attention_mask"].to(train_config_dict["device"])
             }
+
             outputs = model(aa_masked_full_input).squeeze()
             pred_binding_labels = F.sigmoid(classifier(outputs[:, 0, :]))
             pred_masked_aa_representations = outputs[aa_mask, :]
-            pred_masked_aa_tokens = F.softmax(F.cosine_similarity(pred_masked_aa_representations, model.aa_embedder.weight))
+            cos_sim = torch.matmul(pred_masked_aa_representations, model.aa_embedder.weight.T)
+            pred_masked_aa_tokens = F.softmax(cos_sim, dim=-1)
 
-            loss = F.binary_cross_entropy(pred_binding_labels, binding_labels) + F.cross_entropy(pred_masked_aa_tokens, tokenised["input_ids"])
+            loss = F.binary_cross_entropy(
+                pred_binding_labels.squeeze(),
+                binding_labels.to(train_config_dict["device"])) + F.cross_entropy(
+                    pred_masked_aa_tokens, 
+                    tokenised["input_ids"][aa_mask].to(train_config_dict["device"]))
         
             running_loss += loss.item()
         curr_val_loss = running_loss/num_val_batches
@@ -163,14 +191,41 @@ all_labels = []
 
 with torch.no_grad():
     for i in range(num_test_batches):
-        batch = test.iloc[i*batch_size: (i+1)*batch_size]
-        outputs = model(sceptr_tokenise(batch).to(model.device)).squeeze()
-        all_preds.extend(outputs.cpu().numpy())
-        all_labels.extend(batch["label"].to_numpy())
+        white_spaced_TCRs, mixed_epitope, binding_labels = generate_full_tcr_sample_peptide_and_generate_labels(test, train_config_dict["batch_size"])
+            
+        tokenised = tokenizer(
+            white_spaced_TCRs,
+            mixed_epitope,
+            return_tensors="pt", 
+            padding=True
+        )
 
-# auc = roc_auc_score(all_labels, all_preds)
-# print(f'AUC: {auc}')
-# RocCurveDisplay.from_predictions(all_labels, all_preds)
-# plt.savefig("AUC plot")
-# plt.clf()
-# plt.close()
+        masked_aa_tokens, masked_aa_labels, aa_mask = random_aa_masking(tokenised["input_ids"], tokenizer=tokenizer)
+        aa_masked_full_input = {
+            "input_ids": masked_aa_tokens.to(train_config_dict["device"]),
+            "token_type_ids" : tokenised["token_type_ids"].to(train_config_dict["device"]),
+            "attention_mask": tokenised["attention_mask"].to(train_config_dict["device"])
+        }
+
+        outputs = model(aa_masked_full_input).squeeze()
+        pred_binding_labels = F.sigmoid(classifier(outputs[:, 0, :]))
+        pred_masked_aa_representations = outputs[aa_mask, :]
+        cos_sim = torch.matmul(pred_masked_aa_representations, model.aa_embedder.weight.T)
+        pred_masked_aa_tokens = F.softmax(cos_sim, dim=-1)
+
+        # loss = F.binary_cross_entropy(
+        #     pred_binding_labels.squeeze(),
+        #     binding_labels.to(train_config_dict["device"])) + F.cross_entropy(
+        #         pred_masked_aa_tokens, 
+        #         tokenised["input_ids"][aa_mask].to(train_config_dict["device"]))
+    
+        # running_loss += loss.item()
+        all_preds.extend(pred_binding_labels.cpu().numpy())
+        all_labels.extend(binding_labels.numpy())
+
+auc = roc_auc_score(all_labels, all_preds)
+print(f'AUC: {auc}')
+RocCurveDisplay.from_predictions(all_labels, all_preds)
+plt.savefig("AUC plot")
+plt.clf()
+plt.close()

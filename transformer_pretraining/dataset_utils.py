@@ -44,7 +44,7 @@ def generate_full_tcr_sample_peptide_and_generate_labels(df: pd.DataFrame, batch
     random_mask = torch.rand(batch_size) > 0.5
     target_epitope.iloc[random_mask].replace(to_replace=random_epitope)
     target_epitope = target_epitope.to_list()
-    labels = torch.ones(batch_size, dtype=torch.int8)
+    labels = torch.ones(batch_size, dtype=torch.float)
     labels[random_mask] = 0
     return white_spaced_TCRs, target_epitope, labels
 
