@@ -12,6 +12,8 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
+import transformers
+
 from tqdm import tqdm
 
 
@@ -20,11 +22,11 @@ from sceptr_tokeniser import sceptr_tokenise
 
 
 train_config_dict = {
-    "lr": 2e-4,
-    "num_epoch": 30,
+    "lr": 3e-4,
+    "num_epoch": 50,
     "classifier_hid_dim": 128,
     "has_scheduler": False,
-    "batch_size": 1024*4,
+    "batch_size": 1024,
     "dataset_path": "~/Documents/results/data_preprocessing/TABLO/CD4_CD8_sceptr_nr_cdrs.csv.gz"
 }
 
@@ -52,15 +54,29 @@ train, test = train_test_split(tc_df, test_size=0.2, random_state=42)
 
 train, val = train_test_split(train, test_size=0.2, random_state=42)
 
-criterion = nn.BCELoss()
-optimizer = optim.Adam(model.parameters(), lr=train_config_dict["lr"])
-# scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
 
 num_epochs = train_config_dict["num_epoch"]
 batch_size = train_config_dict["batch_size"]
 num_train_batches = int(train.shape[0] / batch_size)
 num_val_batches = int(val.shape[0] / batch_size)
 num_test_batches = int(test.shape[0] / batch_size)
+
+
+
+criterion = nn.BCELoss()
+
+if train_config_dict["has_scheduler"]:
+    optimizer = optim.AdamW(model.parameters(), lr=train_config_dict["lr"])
+    total_steps = num_epochs*num_train_batches
+    scheduler = transformers.optimization.get_cosine_schedule_with_warmup(
+        optimizer, 
+        num_warmup_steps=int(train_config_dict["num_warmup_proportion"]*total_steps), 
+        num_training_steps=total_steps
+    )
+else:
+    optimizer = optim.Adam(model.parameters(), lr=train_config_dict["lr"])
+
+
 
 best_val_loss = np.inf
 
@@ -81,7 +97,8 @@ for epoch in range(num_epochs):
         optimizer.step()
         
         running_loss += loss.item()
-    # scheduler.step()
+        if train_config_dict["has_scheduler"]:
+            scheduler.step()
     
     print(f'Epoch [{epoch+1}/{num_epochs}], Train Loss: {running_loss/num_train_batches:.4f}')
 
