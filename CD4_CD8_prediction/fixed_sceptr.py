@@ -17,12 +17,19 @@ import sceptr
 
 
 train_config_dict = {
-    "lr": 1e-3,
-    "num_epoch": 30,
+    "lr": 3e-4,
+    "num_epoch": 50,
     "classifier_hid_dim": 128,
-    "has_scheduler": False,
     "batch_size": 1024*4,
-    "dataset_path": "~/Documents/results/data_preprocessing/TABLO/CD4_CD8_sceptr_nr_cdrs.csv.gz"
+    "dataset_path": "~/Documents/results/data_preprocessing/TABLO/CD4_CD8_sceptr_nr_cdrs.csv.gz",
+    "sceptr_model": "large"
+}
+
+sceptr_model_variants = {
+    "default": sceptr.variant.default,
+    "large": sceptr.variant.large,
+    "small": sceptr.variant.small,
+    "tiny": sceptr.variant.tiny
 }
 
 print("training parameters:")
@@ -43,8 +50,21 @@ train_val, test = train_test_split(tc_df, test_size=0.2, random_state=42)
 
 train, val = train_test_split(train_val, test_size=0.2, random_state=42)
 
-sceptr_model = sceptr.variant.default()
+sceptr_model = sceptr_model_variants[train_config_dict["sceptr_model"]]()
 
+# get model encoder output (=input) dimension
+tcrs = pd.DataFrame(
+    data = {
+            "TRAV": ["TRAV38-1*01", "TRAV3*01", "TRAV13-2*01", "TRAV38-2/DV8*01"],
+            "CDR3A": ["CAHRSAGGGTSYGKLTF", "CAVDNARLMF", "CAERIRKGQVLTGGGNKLTF", "CAYRSAGGGTSYGKLTF"],
+            "TRBV": ["TRBV2*01", "TRBV25-1*01", "TRBV9*01", "TRBV2*01"],
+            "CDR3B": ["CASSEFQGDNEQFF", "CASSDGSFNEQFF", "CASSVGDLLTGELFF", "CASSPGTGGNEQYF"],
+        },
+        index = [0,1,2,3]
+    )
+sceptr_encoder_dimension = sceptr_model.calc_vector_representations(tcrs).shape[1]
+
+# define classifier model
 class TCellClassifier(nn.Module):
     def __init__(self, input_dim=64, hidden_dim=128):
         super(TCellClassifier, self).__init__()
@@ -59,7 +79,7 @@ class TCellClassifier(nn.Module):
         x = F.sigmoid(self.fc2(x))
         return x
     
-model = TCellClassifier()
+model = TCellClassifier(input_dim=sceptr_encoder_dimension)
 print(summary(model))
 
 

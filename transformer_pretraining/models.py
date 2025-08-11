@@ -95,10 +95,6 @@ class TCR_peptide_model(nn.Module):
             )
 
 
-class TCR_peptide_model_2(nn.Module):
-    pass
-
-
 if __name__ == "__main__": 
     tokenizer = transformers.BertTokenizerFast(
             "aa_vocab.txt",

@@ -2,6 +2,7 @@ import torch
 from torch.nn import utils
 
 import pandas as pd
+import numpy as np
 
 
 MyAminoAcidTokenIndex = {
@@ -68,7 +69,18 @@ def tokenise_each_tuple(entry: tuple):
     return tokenised
 
 
-def sceptr_tokenise(df: pd.DataFrame):
+def one_hot_vector_from_tokenised_list(tokenised_list: list, one_hot_dim=29):
+    pos_embed_idx = 0
+    cdr_embed_start_idx = 22
+    empty_tensor = np.zeros((len(tokenised_list), one_hot_dim))
+    for i in range(len(tokenised_list)):
+        empty_tensor[i][tokenised_list[i][0]] = 1
+        empty_tensor[i][pos_embed_idx] = tokenised_list[i][1] / tokenised_list[i][2] if tokenised_list[i][2] != 0 else 0
+        empty_tensor[i][cdr_embed_start_idx + tokenised_list[i][3]] = 1
+    return empty_tensor
+
+
+def sceptr_tokenise(df: pd.DataFrame, tokenise_method=tokenise_each_tuple):
     '''
     input:
         entire DataFrame containing amino acid sequences of all CDRs of both chains of TCRs
@@ -79,7 +91,7 @@ def sceptr_tokenise(df: pd.DataFrame):
     '''
     tokenised = []
     for entry in df.itertuples():
-        tokenised.append(torch.tensor(tokenise_each_tuple(entry)))
+        tokenised.append(torch.tensor(tokenise_method(entry)))
 
     padded_batch = utils.rnn.pad_sequence(
                 sequences=tokenised,
@@ -87,3 +99,5 @@ def sceptr_tokenise(df: pd.DataFrame):
                 padding_value=0,
             ) 
     return padded_batch
+
+

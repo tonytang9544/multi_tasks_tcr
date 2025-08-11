@@ -16,20 +16,21 @@ import transformers
 
 
 from transformerModel import TransformerTCRModel
-from sceptr_tokeniser import sceptr_tokenise
+from sceptr_tokeniser import sceptr_tokenise, tokenise_each_tuple, one_hot_vector_from_tokenised_list
 
 
 train_config_dict = {
-    "lr": 2e-4,
+    "lr": 5e-4,
     "num_epoch": 50,
+    "one_hot_feature_embedding": True,
     "classifier_hid_dim": 256,
     "transformer_model_dim": 128,
     "encoder_feedforward_dim": 512,
     "num_encoder_layers": 6,
-    "has_scheduler": False,
+    "has_scheduler": True,
     "batch_size": 1024,
     "dataset_path": "~/Documents/results/data_preprocessing/TABLO/CD4_CD8_sceptr_nr_cdrs.csv.gz",
-    "num_warmup_proportion": 0.1,
+    "num_warmup_proportion": 0.02,
     "max_grad_norm": None
 }
 
@@ -46,13 +47,25 @@ tc_df = pd.read_csv(tcr_data_path).dropna().reset_index(drop=True)#.iloc[:1000]
 # print(tc_df.head())
 
 
-    
-model = TransformerTCRModel(
-    hidden_dim=train_config_dict["classifier_hid_dim"],
-    dim_feedforward=train_config_dict["encoder_feedforward_dim"],
-    num_layer=train_config_dict["num_encoder_layers"],
-    transformer_model_dim=train_config_dict["transformer_model_dim"]
-)
+if train_config_dict["one_hot_feature_embedding"]:
+    model = TransformerTCRModel(
+        hidden_dim=train_config_dict["classifier_hid_dim"],
+        dim_feedforward=train_config_dict["encoder_feedforward_dim"],
+        num_layer=train_config_dict["num_encoder_layers"],
+        transformer_model_dim=train_config_dict["transformer_model_dim"],
+        embedding_bias=False,
+        embedding_dim=29
+    )
+    tokenise_method = lambda x: one_hot_vector_from_tokenised_list(tokenise_each_tuple(x))
+else:
+    model = TransformerTCRModel(
+        hidden_dim=train_config_dict["classifier_hid_dim"],
+        dim_feedforward=train_config_dict["encoder_feedforward_dim"],
+        num_layer=train_config_dict["num_encoder_layers"],
+        transformer_model_dim=train_config_dict["transformer_model_dim"]
+    )
+    tokenise_method = lambda x: tokenise_each_tuple(x)
+
 model = model.to(device)
 summary(model)
 
@@ -97,7 +110,7 @@ for epoch in range(num_epochs):
         batch = train.iloc[i*batch_size: (i+1)*batch_size]
         
         # Forward pass
-        outputs = model(sceptr_tokenise(batch).to(device=device, dtype=torch.float)).squeeze()
+        outputs = model(sceptr_tokenise(batch, tokenise_method=tokenise_method).to(device=device, dtype=torch.float)).squeeze()
         loss = criterion(outputs, torch.tensor(batch["label"].to_numpy(), dtype=torch.float32).to(device))
         
         # Backward pass and optimization
@@ -120,7 +133,7 @@ for epoch in range(num_epochs):
             batch = val.iloc[i*batch_size: (i+1)*batch_size]
             
             # Forward pass
-            outputs = model(sceptr_tokenise(batch).to(device=device, dtype=torch.float)).squeeze()
+            outputs = model(sceptr_tokenise(batch, tokenise_method=tokenise_method).to(device=device, dtype=torch.float)).squeeze()
             loss = criterion(outputs, torch.tensor(batch["label"].to_numpy(), dtype=torch.float32).to(device))
             running_loss += loss.item()
         curr_val_loss = running_loss/num_val_batches
@@ -140,7 +153,7 @@ all_labels = []
 with torch.no_grad():
     for i in range(num_test_batches):
         batch = test.iloc[i*batch_size: (i+1)*batch_size]
-        outputs = model(sceptr_tokenise(batch).to(device=device, dtype=torch.float)).squeeze()
+        outputs = model(sceptr_tokenise(batch, tokenise_method=tokenise_method).to(device=device, dtype=torch.float)).squeeze()
         all_preds.extend(outputs.cpu().numpy())
         all_labels.extend(batch["label"].to_numpy())
 
