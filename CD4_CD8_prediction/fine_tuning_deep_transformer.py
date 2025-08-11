@@ -90,12 +90,13 @@ num_test_batches = int(test.shape[0] / batch_size)
 criterion = nn.BCELoss()
 if train_config_dict["has_scheduler"]:
     optimizer = optim.AdamW(model.parameters(), lr=train_config_dict["lr"])
-    total_steps = num_epochs*num_train_batches
-    scheduler = transformers.optimization.get_cosine_schedule_with_warmup(
-        optimizer, 
-        num_warmup_steps=int(train_config_dict["num_warmup_proportion"]*total_steps), 
-        num_training_steps=total_steps
-    )
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.2)
+    # total_steps = num_epochs*num_train_batches
+    # scheduler = transformers.optimization.get_cosine_schedule_with_warmup(
+    #     optimizer, 
+    #     num_warmup_steps=int(train_config_dict["num_warmup_proportion"]*total_steps), 
+    #     num_training_steps=total_steps
+    # )
 else:
     optimizer = optim.Adam(model.parameters(), lr=train_config_dict["lr"])
 
@@ -120,10 +121,13 @@ for epoch in range(num_epochs):
         optimizer.step()
         
         running_loss += loss.item()
-        if train_config_dict["has_scheduler"]:
-            scheduler.step()
+        
+    if train_config_dict["has_scheduler"]:
+        print(f"Learn rate: {scheduler.get_last_lr()}")
+        scheduler.step()    
     
     print(f'Epoch [{epoch+1}/{num_epochs}], Train Loss: {running_loss/num_train_batches:.4f}')
+    
 
     model.eval()
     with torch.no_grad():

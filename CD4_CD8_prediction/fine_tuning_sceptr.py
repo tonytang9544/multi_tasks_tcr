@@ -27,7 +27,8 @@ train_config_dict = {
     "classifier_hid_dim": 128,
     "has_scheduler": False,
     "batch_size": 1024,
-    "dataset_path": "~/Documents/results/data_preprocessing/TABLO/CD4_CD8_sceptr_nr_cdrs.csv.gz"
+    "dataset_path": "~/Documents/results/data_preprocessing/TABLO/CD4_CD8_sceptr_nr_cdrs.csv.gz",
+    "sceptr_model_variant": "large"
 }
 
 print("training parameters:")
@@ -41,7 +42,10 @@ tc_df = pd.read_csv(tcr_data_path).dropna().reset_index(drop=True)
 # print(tc_df.head())
 
     
-model = SceptrFineTuneModel(hidden_dim_1=train_config_dict["classifier_hid_dim"])
+model = SceptrFineTuneModel(
+    hidden_dim_1=train_config_dict["classifier_hid_dim"],
+    model_variant=train_config_dict["sceptr_model_variant"]
+)
 summary(model)
 
 

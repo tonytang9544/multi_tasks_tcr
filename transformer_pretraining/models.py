@@ -37,7 +37,7 @@ class PositionalEncoding(nn.Module):
 class TCR_peptide_model(nn.Module):
     def __init__(
             self, 
-            vocab_size: int = 26, 
+            tokenisation_dim: int = 29, 
             transformer_model_dim: int = 64, 
             feedforward_dim: int = 256, 
             nhead: int = 8, 
@@ -52,25 +52,8 @@ class TCR_peptide_model(nn.Module):
         '''
         super().__init__()
 
-        self.aa_embedder = nn.Embedding(
-            num_embeddings=vocab_size,
-            embedding_dim=transformer_model_dim
-        )
-
-        self.pos_embedder = PositionalEncoding(
-            d_model=transformer_model_dim,
-            max_len=max_seq_len
-        )
-
-        # self.cdr_embedder = nn.Embedding(
-        #     num_embeddings=6,
-        #     embedding_dim=transformer_model_dim
-        # )
-
-        self.token_type_embedder = nn.Embedding(
-            num_embeddings=2,
-            embedding_dim=transformer_model_dim
-        )
+        # store a matrix as a loop up table for the tokenised one-hot vector
+        self.embedder = nn.Linear(tokenisation_dim, transformer_model_dim, bias=False)
 
         self.encoder = nn.TransformerEncoder(
             nn.TransformerEncoderLayer(
@@ -84,8 +67,7 @@ class TCR_peptide_model(nn.Module):
         )
 
     def forward(self, x):
-        aa_embedded = self.aa_embedder(x["input_ids"])
-        pos_embedded = self.pos_embedder(aa_embedded)
+        embedded = self.embedder(x)
         token_type_embedded = self.token_type_embedder(x["token_type_ids"])
         src_key_padding_mask = x["attention_mask"] == 0
         embedded = pos_embedded + token_type_embedded
@@ -96,18 +78,31 @@ class TCR_peptide_model(nn.Module):
 
 
 if __name__ == "__main__": 
-    tokenizer = transformers.BertTokenizerFast(
-            "aa_vocab.txt",
-            do_lower_case=False,
-            do_basic_tokenize=True,
-            tokenize_chinese_chars=False,
-            padding_side="right",
-        )  
-    model = TCR_peptide_model(tokenizer.vocab_size)
-    print(summary(model))
-    print(tokenizer(["E E A P U, A F G", "E E A P U, A F G", "E E A P U, A F G E F A"], ["G F P", "A A A A A", "C F G"], return_tensors="pt", padding=True))
-    print(model(tokenizer(["E E A P U, A F G", "E E A P U, A F G", "E E A P U, A F G E F A"], ["G F P", "A A A A A", "C F G"], return_tensors="pt", padding=True)).shape)
-    print(tokenizer.mask_token_id, tokenizer.cls_token)
+    # tokenizer = transformers.BertTokenizerFast(
+    #         "aa_vocab.txt",
+    #         do_lower_case=False,
+    #         do_basic_tokenize=True,
+    #         tokenize_chinese_chars=False,
+    #         padding_side="right",
+    #     )  
+    # model = TCR_peptide_model(tokenizer.vocab_size)
+    # print(summary(model))
+    # print(tokenizer(["E E A P U, A F G", "E E A P U, A F G", "E E A P U, A F G E F A"], ["G F P", "A A A A A", "C F G"], return_tensors="pt", padding=True))
+    # print(model(tokenizer(["E E A P U, A F G", "E E A P U, A F G", "E E A P U, A F G E F A"], ["G F P", "A A A A A", "C F G"], return_tensors="pt", padding=True)).shape)
+    # print(tokenizer.mask_token_id, tokenizer.cls_token)
+
+    import matplotlib.pyplot as plt
+    pos_enc_vec = PositionalEncoding(64).pe.squeeze()
+
+    print(pos_enc_vec)
+    print(pos_enc_vec.shape)
+
+    for i in range(6):
+        plt.plot(pos_enc_vec[:20, i], label=str(i))
+    plt.legend()
+    plt.savefig("position_encoding_vector.png")
+    plt.cla()
+    plt.close()
 
     # pretrain_model = TCRtransformerPretrainer()
     # print(summary(pretrain_model))

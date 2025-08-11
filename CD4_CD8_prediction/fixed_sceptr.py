@@ -17,7 +17,7 @@ import sceptr
 
 
 train_config_dict = {
-    "lr": 3e-4,
+    "lr": 1e-3,
     "num_epoch": 50,
     "classifier_hid_dim": 128,
     "batch_size": 1024*4,
@@ -53,16 +53,12 @@ train, val = train_test_split(train_val, test_size=0.2, random_state=42)
 sceptr_model = sceptr_model_variants[train_config_dict["sceptr_model"]]()
 
 # get model encoder output (=input) dimension
-tcrs = pd.DataFrame(
-    data = {
-            "TRAV": ["TRAV38-1*01", "TRAV3*01", "TRAV13-2*01", "TRAV38-2/DV8*01"],
-            "CDR3A": ["CAHRSAGGGTSYGKLTF", "CAVDNARLMF", "CAERIRKGQVLTGGGNKLTF", "CAYRSAGGGTSYGKLTF"],
-            "TRBV": ["TRBV2*01", "TRBV25-1*01", "TRBV9*01", "TRBV2*01"],
-            "CDR3B": ["CASSEFQGDNEQFF", "CASSDGSFNEQFF", "CASSVGDLLTGELFF", "CASSPGTGGNEQYF"],
-        },
-        index = [0,1,2,3]
-    )
-sceptr_encoder_dimension = sceptr_model.calc_vector_representations(tcrs).shape[1]
+sceptr_model_dim = sceptr_model._bert.get_vector_representations_of(
+            torch.tensor([[
+                [0, 0, 0, 0],
+                [1, 2, 3, 2],
+                [4, 3, 3, 2]
+        ]]).to(sceptr_model._device)).shape[1]
 
 # define classifier model
 class TCellClassifier(nn.Module):
@@ -79,7 +75,7 @@ class TCellClassifier(nn.Module):
         x = F.sigmoid(self.fc2(x))
         return x
     
-model = TCellClassifier(input_dim=sceptr_encoder_dimension)
+model = TCellClassifier(input_dim=sceptr_model_dim)
 print(summary(model))
 
 
