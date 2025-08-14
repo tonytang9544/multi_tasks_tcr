@@ -22,7 +22,7 @@ train_config_dict = {
     "num_epoch": 50,
     "classifier_hid_dim": 128,
     "batch_size": 1024*4,
-    "dataset_path": "~/Documents/results/data_preprocessing/TABLO/CD4_CD8_sceptr_nr_cdrs.csv.gz",
+    "dataset_path": "~/Documents/results/data_preprocessing/TABLO/TABLO_full_sceptr_nr_cdr.csv.gz",
     "sceptr_model": "default"
 }
 
@@ -36,16 +36,18 @@ sceptr_model_variants = {
 print("training parameters:")
 print(train_config_dict)
 
-CD_label_col = "CD4_or_CD8"
+label_col = "MAIT_or_NOT"
 
-# tcr_data_path = "~/Documents/results/data_preprocessing/TABLO/CD4_CD8_sceptr.csv.gz"
 tcr_data_path = train_config_dict["dataset_path"]
 
-tc_df = pd.read_csv(tcr_data_path)
+tc_df = pd.read_csv(tcr_data_path).dropna().reset_index(drop=True)#.iloc[:1000]
+tc_df[label_col] = tc_df["annotation_L3"] == "MAIT"
 
-# print(sceptr.calc_vector_representations(tc_df))
+print(tc_df.head())
+print(tc_df[label_col].unique())
+print(tc_df[label_col].value_counts())
 
-tc_df["label"] = LabelEncoder().fit_transform(tc_df[CD_label_col])
+tc_df["label"] = LabelEncoder().fit_transform(tc_df[label_col])
 
 train_val, test = train_test_split(tc_df, test_size=0.2, random_state=42)
 

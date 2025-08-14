@@ -1,11 +1,12 @@
 import pandas as pd
 import numpy as np
 from torchinfo import summary
+import pickle
 
 from sklearn.model_selection import train_test_split
 # from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import LabelEncoder
-from sklearn.metrics import roc_auc_score, RocCurveDisplay
+from sklearn.metrics import roc_auc_score, RocCurveDisplay, PrecisionRecallDisplay, average_precision_score
 import matplotlib.pyplot as plt
 
 import torch
@@ -28,6 +29,8 @@ train_config_dict = {
     "encoder_feedforward_dim": 512,
     "num_encoder_layers": 6,
     "has_scheduler": True,
+    "scheduler_gamma": 0.5,
+    "scheduler_step_size": 6,
     "batch_size": 1024,
     "dataset_path": "~/Documents/results/data_preprocessing/TABLO/CD4_CD8_sceptr_nr_cdrs.csv.gz",
     "num_warmup_proportion": 0.02,
@@ -90,7 +93,11 @@ num_test_batches = int(test.shape[0] / batch_size)
 criterion = nn.BCELoss()
 if train_config_dict["has_scheduler"]:
     optimizer = optim.AdamW(model.parameters(), lr=train_config_dict["lr"])
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.2)
+    scheduler = optim.lr_scheduler.StepLR(
+        optimizer, 
+        step_size=train_config_dict["scheduler_step_size"], 
+        gamma=train_config_dict["scheduler_gamma"]
+    )
     # total_steps = num_epochs*num_train_batches
     # scheduler = transformers.optimization.get_cosine_schedule_with_warmup(
     #     optimizer, 
@@ -161,9 +168,24 @@ with torch.no_grad():
         all_preds.extend(outputs.cpu().numpy())
         all_labels.extend(batch["label"].to_numpy())
 
-auc = roc_auc_score(all_labels, all_preds)
-print(f'AUC: {auc}')
+
+with open("true_pred_dict.pkl", "wb") as f:
+    pickle.dump(
+        {
+            "y_true": all_labels,
+            "y_pred": all_preds
+        },
+        f
+    )
+
+
+print(f'ROC_AUC: {roc_auc_score(all_labels, all_preds)}')
 RocCurveDisplay.from_predictions(all_labels, all_preds)
-plt.savefig("AUC plot")
+plt.savefig("ROC_AUC plot")
+plt.clf()
+plt.close()
+print(f"Average precision score: {average_precision_score(all_labels, all_preds)}")
+PrecisionRecallDisplay.from_predictions(all_labels, all_preds)
+plt.savefig("Precision Recall curve plot")
 plt.clf()
 plt.close()

@@ -10,7 +10,7 @@ import datetime
 running_time_stamp = str(datetime.datetime.now().strftime("%Y%m%d_%H%M"))
 print(f"script running time stamp is {running_time_stamp}")
 
-dataset_path = "~/Documents/results/data_preprocessing/TABLO/CD4_CD8_sceptr_nr_cdrs.csv.gz"
+dataset_path = "~/Documents/results/data_preprocessing/TABLO/TABLO_full_sceptr_nr_cdr.csv.gz"
 sub_sample_size = 10000
 
 dataset = pd.read_csv(dataset_path).dropna().sample(sub_sample_size)
