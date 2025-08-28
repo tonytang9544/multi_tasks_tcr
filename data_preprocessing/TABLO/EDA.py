@@ -3,7 +3,7 @@
 import pandas as pd
 import numpy as np
 
-TABLO_dataset = pd.read_csv('~/Documents/dataset/TABLO_alpha_beta_seperate.csv.gz')
+TABLO_dataset = pd.read_csv('~/Documents/results/data_preprocessing/TABLO/TABLO_full_sceptr_nr_cdr.csv.gz')
 
 print(TABLO_dataset.head())
 print(TABLO_dataset.columns)

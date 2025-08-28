@@ -22,7 +22,7 @@ def generate_all_three_cdrs(dataset: pd.DataFrame):
     CDR1B = []
     CDR2B = []
 
-    aa_seq_df = pd.DataFrame()
+    aa_seq_df = dataset.copy()
     print("now loop through the dataset to generate all three cdrs")
 
     for idx, entry in tqdm(dataset.iterrows()):
@@ -42,17 +42,17 @@ def generate_all_three_cdrs(dataset: pd.DataFrame):
     aa_seq_df["CDR2A"] = pd.Series(CDR2A)
     aa_seq_df["CDR1B"] = pd.Series(CDR1B)
     aa_seq_df["CDR2B"] = pd.Series(CDR2B)
-    aa_seq_df["CDR3A"] = dataset["CDR3A"].copy()
-    aa_seq_df["CDR3B"] = dataset["CDR3B"].copy()
-    aa_seq_df["CD4_or_CD8"] = dataset["CD4_or_CD8"].copy()
 
     return aa_seq_df
 
 
-pre_selected_dataset = pd.read_csv("20250806_1253_dataset.csv.gz")
+pre_selected_dataset = pd.read_csv("20250814_2319_dataset.csv.gz")
 # print(pre_selected_dataset.columns)
 pre_selected_dataset = generate_all_three_cdrs(pre_selected_dataset)
-pre_selected_pairs = np.load("20250806_1253_nn_array.npy")
+pre_selected_pairs = np.load("20250814_2319_nn_array.npy")
+
+label_col = "label"
+pre_selected_dataset[label_col] = pre_selected_dataset["annotation_L3"] == "MAIT"
 
 # print(pre_selected_pairs.shape)
 
@@ -65,7 +65,7 @@ for i in tqdm(range(pre_selected_pairs.shape[0])):
     for cdr in cdrs:
         total_distance += distance(pre_selected_dataset.iloc[tcr1][cdr], pre_selected_dataset.iloc[tcr2][cdr])
 
-    is_consistent = 0 if pre_selected_dataset.iloc[tcr1]["CD4_or_CD8"] == pre_selected_dataset.iloc[tcr2]["CD4_or_CD8"] else 1
+    is_consistent = 0 if pre_selected_dataset.iloc[tcr1][label_col] == pre_selected_dataset.iloc[tcr2][label_col] else 1
 
     if total_distance not in levenshtein_phenotype_correlation_dict.keys():
         levenshtein_phenotype_correlation_dict[total_distance] = [0, 0]

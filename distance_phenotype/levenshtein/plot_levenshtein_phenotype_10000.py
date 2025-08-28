@@ -7,7 +7,7 @@ import datetime
 running_time_stamp = str(datetime.datetime.now().strftime("%Y%m%d_%H%M"))
 print(running_time_stamp)
 
-corr_array = np.load("20250727_2324_correlation_array.npy")
+corr_array = np.load("20250814_2317_correlation_array.npy")
 
 total_count = corr_array.T.dot((1, 1))
 print(total_count)

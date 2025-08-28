@@ -16,7 +16,7 @@ import torch.optim as optim
 import transformers
 
 
-from transformerModel import TransformerTCRModel
+from physics_informed_transformer import PhysTransformerTCRModel
 from sceptr_tokeniser import sceptr_tokenise, tokenise_each_tuple, one_hot_vector_from_tokenised_list
 
 train_config_dict = {
@@ -50,7 +50,7 @@ tc_df = pd.read_csv(tcr_data_path).dropna().reset_index(drop=True)#.iloc[:1000]
 
 
 if train_config_dict["one_hot_feature_embedding"]:
-    model = TransformerTCRModel(
+    model = PhysTransformerTCRModel(
         hidden_dim=train_config_dict["classifier_hid_dim"],
         dim_feedforward=train_config_dict["encoder_feedforward_dim"],
         num_layer=train_config_dict["num_encoder_layers"],
@@ -60,7 +60,7 @@ if train_config_dict["one_hot_feature_embedding"]:
     )
     tokenise_method = lambda x: one_hot_vector_from_tokenised_list(tokenise_each_tuple(x))
 else:
-    model = TransformerTCRModel(
+    model = PhysTransformerTCRModel(
         hidden_dim=train_config_dict["classifier_hid_dim"],
         dim_feedforward=train_config_dict["encoder_feedforward_dim"],
         num_layer=train_config_dict["num_encoder_layers"],

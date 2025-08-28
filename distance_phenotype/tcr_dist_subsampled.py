@@ -9,7 +9,7 @@ print(f"script running time stamp is {running_time_stamp}")
 
 sub_sample_size = 500000
 
-dataset_path = "~/Documents/results/data_preprocessing/TABLO/CD4_CD8_sceptr.csv.gz"
+dataset_path = "~/Documents/results/data_preprocessing/TABLO/TABLO_full_sceptr_nr_cdr.csv.gz"
 dataset = pd.read_csv(dataset_path).sample(sub_sample_size)
 
 print(dataset.head())

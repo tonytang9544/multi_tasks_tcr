@@ -1,6 +1,8 @@
 from sklearn.model_selection import train_test_split
 import pandas as pd
 
+import torch
+
 tcrs = pd.DataFrame(
     data = {
             "TRAV": ["TRAV38-1*01", "TRAV3*01", "TRAV13-2*01", "TRAV38-2/DV8*01"],
@@ -14,3 +16,11 @@ tcrs = pd.DataFrame(
 train, test = train_test_split(tcrs)
 print(train)
 print(test)
+
+a = torch.rand([2, 3, 4])
+print(a)
+b = torch.rand([4, 6])
+print(b)
+c = torch.matmul(a, b)
+print(c.shape)
+
