@@ -20,17 +20,17 @@ from physics_informed_transformer import PhysTransformerTCRModel
 from sceptr_tokeniser import sceptr_tokenise, tokenise_each_tuple, one_hot_vector_from_tokenised_list
 
 train_config_dict = {
-    "lr": 5e-4,
+    "lr": 3e-4,
     "num_epoch": 50,
     "one_hot_feature_embedding": True,
     "classifier_hid_dim": 256,
-    "transformer_model_dim": 128,
-    "encoder_feedforward_dim": 512,
-    "num_encoder_layers": 6,
-    "has_scheduler": True,
+    "transformer_model_dim": 64,
+    "encoder_feedforward_dim": 256,
+    "num_encoder_layers": 3,
+    "has_scheduler": False,
     "scheduler_gamma": 0.5,
     "scheduler_step_size": 6,
-    "batch_size": 1024,
+    "batch_size": 1024*4,
     "dataset_path": "~/Documents/results/data_preprocessing/TABLO/CD4_CD8_sceptr_nr_cdrs.csv.gz",
     "num_warmup_proportion": 0.02,
     "max_grad_norm": None

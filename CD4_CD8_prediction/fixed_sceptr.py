@@ -18,10 +18,10 @@ import sceptr
 
 
 train_config_dict = {
-    "lr": 1e-3,
+    "lr": 1e-2,
     "num_epoch": 50,
     "classifier_hid_dim": 128,
-    "batch_size": 1024*4,
+    "batch_size": 1024*16,
     "dataset_path": "~/Documents/results/data_preprocessing/TABLO/CD4_CD8_sceptr_nr_cdrs.csv.gz",
     "sceptr_model": "default"
 }
@@ -41,7 +41,7 @@ CD_label_col = "CD4_or_CD8"
 # tcr_data_path = "~/Documents/results/data_preprocessing/TABLO/CD4_CD8_sceptr.csv.gz"
 tcr_data_path = train_config_dict["dataset_path"]
 
-tc_df = pd.read_csv(tcr_data_path)
+tc_df = pd.read_csv(tcr_data_path)#[:1024*16*10]
 
 # print(sceptr.calc_vector_representations(tc_df))
 

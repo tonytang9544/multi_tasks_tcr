@@ -3,10 +3,19 @@
 import pandas as pd
 import numpy as np
 
-TABLO_dataset = pd.read_csv('~/Documents/results/data_preprocessing/TABLO/TABLO_full_sceptr_nr_cdr.csv.gz')
 
-print(TABLO_dataset.head())
-print(TABLO_dataset.columns)
+CD4_CD8_dataset = pd.read_csv('~/Documents/results/data_preprocessing/TABLO/CD4_CD8_sceptr_nr_cdrs.csv.gz')
+
+
+print(CD4_CD8_dataset.head())
+print(CD4_CD8_dataset.columns)
+print(CD4_CD8_dataset["CD4_or_CD8"].value_counts())
+
+
+# TABLO_dataset = pd.read_csv('~/Documents/results/data_preprocessing/TABLO/TABLO_full_sceptr_nr_cdr.csv.gz')
+# TABLO_dataset["MAIT_or_not"] = TABLO_dataset["annotation_L3"] == "MAIT"
+# print(TABLO_dataset["MAIT_or_not"].value_counts())
+
 
 # annotation_cols = [f"annotation_L{i}" for i in range(1, 4)]
 

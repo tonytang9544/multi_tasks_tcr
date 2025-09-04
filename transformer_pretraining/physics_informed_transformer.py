@@ -4,7 +4,7 @@ import torch
 from dataset_utils import generate_all_three_cdrs
 
 
-class PhysTransformerTCRModel(nn.Module):
+class PhysCDREncoder(nn.Module):
     def __init__(self, transformer_model_dim=64, embedding_dim=4, embedding_bias=True, hidden_dim=128, nhead=8, num_layer=1, dim_feedforward=256):
         '''
         transformer_model_dim=64 is the dimension of the transformer embedding
@@ -47,16 +47,40 @@ class PhysTransformerTCRModel(nn.Module):
             ],
             dtype=torch.float)
         )
-        self.fc1 = nn.Linear(transformer_model_dim, hidden_dim)
-        self.dropout = nn.Dropout(0.1)
-        self.fc2 = nn.Linear(hidden_dim, 1)
 
 
     def forward(self, x):
         aa_prj = self.amino_acid_projection(x)
         phy_prj = torch.matmul(x[:, :, 1:23], self.physics_aa_projection)
         x = torch.concat([aa_prj, phy_prj], axis=-1)
-        x = self.transformer(x)[:, 0, :]    # only get the CLS token, only works with batch_first=True!
+        return self.transformer(x)
+
+
+class PhysTransformerTCRModel(nn.Module):
+    def __init__(self, transformer_model_dim=64, embedding_dim=4, embedding_bias=True, hidden_dim=128, nhead=8, num_layer=1, dim_feedforward=256):
+        '''
+        transformer_model_dim=64 is the dimension of the transformer embedding
+        hidden_dim is the dimension of the linear classification layer
+        embedding_dim is the dimension of the amino acid embedding space
+        '''
+        super().__init__()
+
+        self.cdr_encoder = PhysCDREncoder(
+            transformer_model_dim=transformer_model_dim,
+            embedding_dim=embedding_dim,
+            embedding_bias=embedding_bias,
+            hidden_dim=hidden_dim,
+            nhead=nhead,
+            num_layer=num_layer,
+            dim_feedforward=dim_feedforward
+        )
+        self.fc1 = nn.Linear(transformer_model_dim, hidden_dim)
+        self.dropout = nn.Dropout(0.1)
+        self.fc2 = nn.Linear(hidden_dim, 1)
+
+
+    def forward(self, x):
+        x = self.cdr_encoder(x)[:, 0, :]    # only get the CLS token, only works with batch_first=True!
         x = self.dropout(self.fc1(x))
         x = F.sigmoid(self.fc2(x))
         return x
