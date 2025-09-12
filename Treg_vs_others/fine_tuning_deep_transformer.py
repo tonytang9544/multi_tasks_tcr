@@ -13,11 +13,10 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-import transformers
-
 
 from transformerModel import TransformerTCRModel
 from sceptr_tokeniser import sceptr_tokenise, tokenise_each_tuple, one_hot_vector_from_tokenised_list
+
 
 train_config_dict = {
     "lr": 3e-4,
@@ -31,7 +30,7 @@ train_config_dict = {
     "scheduler_gamma": 0.5,
     "scheduler_step_size": 6,
     "batch_size": 1024,
-    "dataset_path": "~/Documents/results/data_preprocessing/TABLO/CD4_CD8_sceptr_nr_cdrs.csv.gz",
+    "dataset_path": "~/Documents/results/data_preprocessing/TABLO/TABLO_full_sceptr_nr_cdr.csv.gz",
     "num_warmup_proportion": 0.02,
     "max_grad_norm": None
 }
@@ -41,13 +40,16 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 print("training parameters:")
 print(train_config_dict)
 
-CD_label_col = "CD4_or_CD8"
+label_col = "Phenotype_Label"
 
 tcr_data_path = train_config_dict["dataset_path"]
 
 tc_df = pd.read_csv(tcr_data_path).dropna().reset_index(drop=True)#.iloc[:1000]
+tc_df[label_col] = tc_df["annotation_L3"] == "Tregs"
 # print(tc_df.head())
-
+# print(tc_df[label_col].unique())
+# print(tc_df[label_col].value_counts())
+# input("press any key to continue")
 
 if train_config_dict["one_hot_feature_embedding"]:
     model = TransformerTCRModel(
@@ -75,7 +77,7 @@ summary(model)
 # aa_sequences = generate_all_three_cdrs(tc_df)
 # print(model(sceptr_tokenise(aa_sequences).to("cuda")).shape)
 
-tc_df["label"] = LabelEncoder().fit_transform(tc_df["CD4_or_CD8"])
+tc_df["label"] = LabelEncoder().fit_transform(tc_df[label_col])
 
 train, test = train_test_split(tc_df, test_size=0.2, random_state=42)
 
