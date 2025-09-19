@@ -33,7 +33,7 @@ annotation_level = "annotation_" + config_dict["annotation_level"]
 
 phenotype1_df = full_df[full_df[annotation_level] == config_dict["phenotype_label"]].sample(sub_sample_size).copy()
 
-if "negative_phenotype_label" in config_dict.keys():
+if "negative_phenotype_label" in config_dict.keys() and config_dict["negative_phenotype_label"] is not None:
     phenotype2_df = full_df[full_df[annotation_level] == config_dict["negative_phenotype_label"]].sample(sub_sample_size).copy()
 else:
     phenotype2_df = full_df[full_df[annotation_level] != config_dict["phenotype_label"]].sample(sub_sample_size).copy()
