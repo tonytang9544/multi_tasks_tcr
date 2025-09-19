@@ -6,11 +6,11 @@ import datetime
 
 running_time_stamp = str(datetime.datetime.now().strftime("%Y%m%d_%H%M"))
 
-dataset = pd.read_csv("20250814_1427_dataset_sub_sampled_10000.csv")
-levenshtein_array = np.load("20250814_1427_levenshtein_array_10000.npy")
+dataset = pd.read_csv("/home/minzhetang/Documents/results/distance_phenotype/MAIT_or_NOT/10000_subsampled/20250814_1427_dataset_sub_sampled_10000.csv")
+levenshtein_array = np.load("/home/minzhetang/Documents/results/distance_phenotype/MAIT_or_NOT/10000_subsampled/20250814_1427_levenshtein_array_10000.npy")
 
 label_col = "label"
-dataset[label_col] = dataset["annotation_L3"] == "MAIT"
+dataset[label_col] = dataset["annotation_L3"] == "Tregs"
 
 max_distance = np.max(levenshtein_array)
 

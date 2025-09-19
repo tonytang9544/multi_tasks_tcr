@@ -7,7 +7,7 @@ import datetime
 running_time_stamp = str(datetime.datetime.now().strftime("%Y%m%d_%H%M"))
 print(running_time_stamp)
 
-corr_array = np.load("20250814_2317_correlation_array.npy")
+corr_array = np.load("20250917_1352_correlation_array.npy")
 
 total_count = corr_array.T.dot((1, 1))
 print(total_count)
@@ -28,7 +28,7 @@ fig, ax1 = plt.subplots()
 
 color = "blue"
 ax1.set_xlabel("Levenshtein distance")
-ax1.set_ylabel("CD4/CD8 phenotype correlations", color=color)
+ax1.set_ylabel("phenotype correlations", color=color)
 ax1.scatter(edit_dist_idx, ratio, color=color)
 # ax1.tick_params(axis='y', labelcolor=color)
 

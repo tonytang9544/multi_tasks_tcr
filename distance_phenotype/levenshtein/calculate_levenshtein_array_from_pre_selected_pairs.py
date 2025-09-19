@@ -46,13 +46,13 @@ def generate_all_three_cdrs(dataset: pd.DataFrame):
     return aa_seq_df
 
 
-pre_selected_dataset = pd.read_csv("20250814_2319_dataset.csv.gz")
+pre_selected_dataset = pd.read_csv("/home/minzhetang/Documents/results/distance_phenotype/MAIT_or_NOT/nn_pre_selection/20250814_2319_dataset.csv.gz")
 # print(pre_selected_dataset.columns)
 pre_selected_dataset = generate_all_three_cdrs(pre_selected_dataset)
-pre_selected_pairs = np.load("20250814_2319_nn_array.npy")
+pre_selected_pairs = np.load("/home/minzhetang/Documents/results/distance_phenotype/MAIT_or_NOT/nn_pre_selection/20250814_2319_nn_array.npy")
 
 label_col = "label"
-pre_selected_dataset[label_col] = pre_selected_dataset["annotation_L3"] == "MAIT"
+pre_selected_dataset[label_col] = pre_selected_dataset["annotation_L3"] == "Tregs"
 
 # print(pre_selected_pairs.shape)
 
