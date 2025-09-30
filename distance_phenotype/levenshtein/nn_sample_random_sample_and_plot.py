@@ -125,11 +125,11 @@ for i in tqdm(range(sub_sample_size)):
         for cdr in cdrs:
             total_distance += distance(dataset.iloc[i][cdr], dataset.iloc[j][cdr])
 
-    is_consistent = 0 if dataset.iloc[i][label_col] == dataset.iloc[j][label_col] else 1
-            
-    if total_distance not in levenshtein_phenotype_correlation_dict.keys():
-        levenshtein_phenotype_correlation_dict[total_distance] = [0, 0]
-    levenshtein_phenotype_correlation_dict[total_distance][is_consistent] += 1
+        is_consistent = 0 if dataset.iloc[i][label_col] == dataset.iloc[j][label_col] else 1
+                
+        if total_distance not in levenshtein_phenotype_correlation_dict.keys():
+            levenshtein_phenotype_correlation_dict[total_distance] = [0, 0]
+        levenshtein_phenotype_correlation_dict[total_distance][is_consistent] += 1
 
 
 ##################
