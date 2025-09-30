@@ -12,10 +12,10 @@ import datetime
 # configs
 config_dict = {
     "dataset_path": "~/Documents/results/data_preprocessing/TABLO/TABLO_full_sceptr_nr_cdr.csv.gz",
-    "nearest_neighbour_max_examples": 1000000,
-    "random_sample_examples": 20000,
+    "nearest_neighbour_max_examples": 250000,
+    "random_sample_examples": 25000,
     "annotation_level": "L1",
-    "phenotype_label": "CD4",
+    "positive_phenotype_label": "CD4",
     "negative_phenotype_label": "CD8"
 }
 
@@ -43,12 +43,12 @@ annotation_level = "annotation_" + config_dict["annotation_level"]
 # sample two labels equally for nearest neighbour
 
 print("Now create balanced dataset for nearest neighbour.")
-phenotype1_df = full_df[full_df[annotation_level] == config_dict["phenotype_label"]].copy()
+phenotype1_df = full_df[full_df[annotation_level] == config_dict["positive_phenotype_label"]].copy()
 
 if "negative_phenotype_label" in config_dict.keys() and config_dict["negative_phenotype_label"] is not None:
     phenotype2_df = full_df[full_df[annotation_level] == config_dict["negative_phenotype_label"]].copy()
 else:
-    phenotype2_df = full_df[full_df[annotation_level] != config_dict["phenotype_label"]].copy()
+    phenotype2_df = full_df[full_df[annotation_level] != config_dict["positive_phenotype_label"]].copy()
 
 num_examples_per_label = min(phenotype1_df.shape[0], phenotype2_df.shape[0], config_dict["nearest_neighbour_max_examples"])
 phenotype1_df = phenotype1_df.sample(num_examples_per_label)
@@ -58,14 +58,14 @@ dataset = pd.concat([phenotype1_df, phenotype2_df])
 dataset = dataset.sample(frac=1).reset_index(drop=True)
 
 label_col = "label"
-dataset[label_col] = dataset[annotation_level] == config_dict["phenotype_label"]
+dataset[label_col] = dataset[annotation_level] == config_dict["positive_phenotype_label"]
 dataset.to_csv(os.path.join(save_path, "nearest_neighbour_dataset.csv"))
 
 ################
 # calculate levenshtein array
 
 print("Now finding the nearest neighbours in the dataset using pyrepseq")
-nn_array = nearest_neighbor_tcrdist(dataset, chain="both", max_edits=2)
+nn_array = nearest_neighbor_tcrdist(dataset, chain="both", max_edits=2, n_cpu=4)
 
 
 #########
@@ -93,12 +93,12 @@ for i in tqdm(range(nn_array.shape[0])):
 # sample two labels equally for random sampling
 
 print("Now generating balanced dataset using random sampling.")
-phenotype1_df = full_df[full_df[annotation_level] == config_dict["phenotype_label"]].copy()
+phenotype1_df = full_df[full_df[annotation_level] == config_dict["positive_phenotype_label"]].copy()
 
 if "negative_phenotype_label" in config_dict.keys() and config_dict["negative_phenotype_label"] is not None:
     phenotype2_df = full_df[full_df[annotation_level] == config_dict["negative_phenotype_label"]].copy()
 else:
-    phenotype2_df = full_df[full_df[annotation_level] != config_dict["phenotype_label"]].copy()
+    phenotype2_df = full_df[full_df[annotation_level] != config_dict["positive_phenotype_label"]].copy()
 
 num_examples_per_label = min(phenotype1_df.shape[0], phenotype2_df.shape[0], config_dict["random_sample_examples"])
 phenotype1_df = phenotype1_df.sample(num_examples_per_label)
@@ -108,7 +108,7 @@ dataset = pd.concat([phenotype1_df, phenotype2_df])
 dataset = dataset.sample(frac=1).reset_index(drop=True)
 
 label_col = "label"
-dataset[label_col] = dataset[annotation_level] == config_dict["phenotype_label"]
+dataset[label_col] = dataset[annotation_level] == config_dict["positive_phenotype_label"]
 dataset.to_csv(os.path.join(save_path, "random_sampled_dataset.csv"))
 
 
