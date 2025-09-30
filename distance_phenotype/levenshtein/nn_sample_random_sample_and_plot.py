@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 
 import datetime
 
+manual_logs = []
+
 # configs
 config_dict = {
     "dataset_path": "~/Documents/results/data_preprocessing/TABLO/TABLO_full_sceptr_nr_cdr.csv.gz",
@@ -21,20 +23,27 @@ config_dict = {
 
 # record script start time
 running_time_stamp = str(datetime.datetime.now().strftime("%Y%m%d_%H%M"))
-print(f"script running time stamp is {running_time_stamp}")
+
+manual_logs.append(f"script running time stamp is {running_time_stamp}")
+print(manual_logs[-1])
+
 
 save_path = f"./result/{running_time_stamp}"
-print(f"result saving path is {save_path}")
+manual_logs.append(f"result saving path is {save_path}")
+print(manual_logs[-1])
 
 
 if not os.path.exists(save_path):
     os.makedirs(save_path)
 
-print(f"configuration dictionary: {config_dict}")
+manual_logs.append(f"configuration dictionary: {config_dict}")
+print(manual_logs[-1])
 
 dataset_path = config_dict["dataset_path"]
 
-print("Now loading the dataset.")
+manual_logs.append("Now loading the dataset.")
+print(manual_logs[-1])
+
 full_df = pd.read_csv(dataset_path).dropna()
 
 annotation_level = "annotation_" + config_dict["annotation_level"]
@@ -42,7 +51,9 @@ annotation_level = "annotation_" + config_dict["annotation_level"]
 ###############
 # sample two labels equally for nearest neighbour
 
-print("Now create balanced dataset for nearest neighbour.")
+manual_logs.append("Now create balanced dataset for nearest neighbour.")
+print(manual_logs[-1])
+
 phenotype1_df = full_df[full_df[annotation_level] == config_dict["positive_phenotype_label"]].copy()
 
 if "negative_phenotype_label" in config_dict.keys() and config_dict["negative_phenotype_label"] is not None:
@@ -64,10 +75,13 @@ dataset.to_csv(os.path.join(save_path, "nearest_neighbour_dataset.csv"))
 ################
 # calculate levenshtein array
 
-print("Now finding the nearest neighbours in the dataset using pyrepseq")
+manual_logs.append("Now finding the nearest neighbours in the dataset using pyrepseq")
+print(manual_logs[-1])
+
 nn_array = nearest_neighbor_tcrdist(dataset, chain="both", max_edits=2, n_cpu=4)
 
-print(f"Selected number of nearest neighbour pairs is {nn_array.shape[0]}")
+manual_logs.append(f"Selected number of nearest neighbour pairs is {nn_array.shape[0]}")
+print(manual_logs[-1])
 
 
 #########
@@ -76,7 +90,9 @@ print(f"Selected number of nearest neighbour pairs is {nn_array.shape[0]}")
 cdrs = ["CDR1A", "CDR2A", "CDR3A", "CDR1B", "CDR2B", "CDR3B"]
 levenshtein_phenotype_correlation_dict = {}
 
-print("Now calculating correlation for the pre-selected pairs.")
+manual_logs.append("Now calculating correlation for the pre-selected pairs.")
+print(manual_logs[-1])
+
 
 for i in tqdm(range(nn_array.shape[0])):
     tcr1, tcr2, _ = nn_array[i, :]
@@ -94,7 +110,9 @@ for i in tqdm(range(nn_array.shape[0])):
 ###############
 # sample two labels equally for random sampling
 
-print("Now generating balanced dataset using random sampling.")
+manual_logs.append("Now generating balanced dataset using random sampling.")
+print(manual_logs[-1])
+
 phenotype1_df = full_df[full_df[annotation_level] == config_dict["positive_phenotype_label"]].copy()
 
 if "negative_phenotype_label" in config_dict.keys() and config_dict["negative_phenotype_label"] is not None:
@@ -120,7 +138,9 @@ cdrs = ["CDR1A", "CDR2A", "CDR3A", "CDR1B", "CDR2B", "CDR3B"]
 
 sub_sample_size = dataset.shape[0]
 
-print("Now calculate distance correlation for random selected tcrs")
+manual_logs.append("Now calculate distance correlation for random selected tcrs")
+print(manual_logs[-1])
+
 for i in tqdm(range(sub_sample_size)):
     for j in range(i, sub_sample_size):
         total_distance = 0
@@ -132,6 +152,13 @@ for i in tqdm(range(sub_sample_size)):
         if total_distance not in levenshtein_phenotype_correlation_dict.keys():
             levenshtein_phenotype_correlation_dict[total_distance] = [0, 0]
         levenshtein_phenotype_correlation_dict[total_distance][is_consistent] += 1
+
+
+###########
+# save logs
+
+with open(os.path.join(save_path, "run.log"), "w") as f:
+    f.write("\n".join(manual_logs))
 
 
 ##################
