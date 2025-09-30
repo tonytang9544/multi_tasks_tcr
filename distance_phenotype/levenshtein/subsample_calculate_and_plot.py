@@ -4,12 +4,9 @@ from tqdm import tqdm
 import pandas as pd
 import numpy as np
 import os
-import logging
 import matplotlib.pyplot as plt
 
 import datetime
-
-logger = logging.getLogger(__name__)
 
 # configs
 config_dict = {
@@ -22,15 +19,15 @@ config_dict = {
 
 # record script start time
 running_time_stamp = str(datetime.datetime.now().strftime("%Y%m%d_%H%M"))
-logger.info(f"script running time stamp is {running_time_stamp}")
+print(f"script running time stamp is {running_time_stamp}")
 
 save_path = f"./result/{running_time_stamp}"
-logger.info(f"result saving path is {save_path}")
+print(f"result saving path is {save_path}")
 
 if not os.path.exists(save_path):
     os.makedirs(save_path)
 
-logger.info(f"configuration dictionary: {config_dict}")
+print(f"configuration dictionary: {config_dict}")
 
 dataset_path = config_dict["dataset_path"]
 sub_sample_size = config_dict["sub_sample_size_each_phenotype"]
@@ -71,7 +68,7 @@ for i in range(sub_sample_size):
         levenshtein_array[i, j] = total_distance
     # np.save(f"{running_time_stamp}_levenshtein_slice_{i}", levenshtein_array[i, :])
 
-logger.info("calculated levenshtein_array")
+print("calculated levenshtein_array")
 np.save(os.path.join(save_path, "levenshtein_array"), levenshtein_array)
 
 max_distance = np.max(levenshtein_array)
@@ -86,11 +83,11 @@ for i in range(sample_size):
         correlation_array[is_consistent, levenshtein_array[i, j]] += 1
 
 
-logger.info("calculated correlation array")
+print("calculated correlation array")
 np.save(os.path.join(save_path, "correlation_array"), correlation_array)
 
 total_count = correlation_array.T.dot((1, 1))
-logger.info("counted number of examples for each distance")
+print("counted number of examples for each distance")
 
 edit_dist_idx = np.array([i for i in range(correlation_array.shape[1])])[~(total_count==0)]
 ratio = correlation_array[0, :][~(total_count==0)] / total_count[~(total_count==0)]

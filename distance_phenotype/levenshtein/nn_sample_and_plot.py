@@ -5,36 +5,30 @@ from tqdm import tqdm
 import pandas as pd
 import numpy as np
 import os
-import logging
 import matplotlib.pyplot as plt
 
 import datetime
-
-logger = logging.getLogger(__name__)
 
 # configs
 config_dict = {
     "dataset_path": "~/Documents/results/data_preprocessing/TABLO/TABLO_full_sceptr_nr_cdr.csv.gz",
     "nearest_neighbour_max_examples": 100000,
     "annotation_level": "L1",
-    "phenotype_label": "CD4",
+    "positive_phenotype_label": "CD4",
     "negative_phenotype_label": "CD8"
 }
 
 # record script start time
 running_time_stamp = str(datetime.datetime.now().strftime("%Y%m%d_%H%M"))
-logger.info(f"script running time stamp is {running_time_stamp}")
+print(f"script running time stamp is {running_time_stamp}")
 
 save_path = f"./result/{running_time_stamp}"
-logger.info(f"result saving path is {save_path}")
-
-logging.basicConfig(filename=os.path.join(save_path, 'example.log'), encoding='utf-8', level=logging.DEBUG)
-
+print(f"result saving path is {save_path}")
 
 if not os.path.exists(save_path):
     os.makedirs(save_path)
 
-logger.info(f"configuration dictionary: {config_dict}")
+print(f"configuration dictionary: {config_dict}")
 
 dataset_path = config_dict["dataset_path"]
 
@@ -45,12 +39,12 @@ annotation_level = "annotation_" + config_dict["annotation_level"]
 ###############
 # sample two labels equally
 
-phenotype1_df = full_df[full_df[annotation_level] == config_dict["phenotype_label"]].copy()
+phenotype1_df = full_df[full_df[annotation_level] == config_dict["positive_phenotype_label"]].copy()
 
 if "negative_phenotype_label" in config_dict.keys() and config_dict["negative_phenotype_label"] is not None:
     phenotype2_df = full_df[full_df[annotation_level] == config_dict["negative_phenotype_label"]].copy()
 else:
-    phenotype2_df = full_df[full_df[annotation_level] != config_dict["phenotype_label"]].copy()
+    phenotype2_df = full_df[full_df[annotation_level] != config_dict["positive_phenotype_label"]].copy()
 
 num_examples_per_label = min(phenotype1_df.shape[0], phenotype2_df.shape[0], config_dict["nearest_neighbour_max_examples"])
 phenotype1_df = phenotype1_df.sample(num_examples_per_label)
@@ -60,7 +54,7 @@ dataset = pd.concat([phenotype1_df, phenotype2_df])
 dataset = dataset.sample(frac=1).reset_index(drop=True)
 
 label_col = "label"
-dataset[label_col] = dataset[annotation_level] == config_dict["phenotype_label"]
+dataset[label_col] = dataset[annotation_level] == config_dict["positive_phenotype_label"]
 dataset.to_csv(os.path.join(save_path, "dataset_sub_sampled.csv"))
 
 ################
@@ -75,7 +69,7 @@ nn_array = nearest_neighbor_tcrdist(dataset, chain="both", max_edits=2)
 cdrs = ["CDR1A", "CDR2A", "CDR3A", "CDR1B", "CDR2B", "CDR3B"]
 levenshtein_phenotype_correlation_dict = {}
 
-logger.info("Now calculating correlation.")
+print("Now calculating correlation.")
 
 for i in tqdm(range(nn_array.shape[0])):
     tcr1, tcr2, _ = nn_array[i, :]
@@ -96,11 +90,11 @@ for k, v in levenshtein_phenotype_correlation_dict.items():
     correlation_array[0, k] = levenshtein_phenotype_correlation_dict[k][0]
     correlation_array[1, k] = levenshtein_phenotype_correlation_dict[k][1]
 
-logger.info("calculated correlation array")
+print("calculated correlation array")
 np.save(os.path.join(save_path, "correlation_array"), correlation_array)
 
 total_count = correlation_array.T.dot((1, 1))
-logger.info("counted number of examples for each distance")
+print("counted number of examples for each distance")
 
 edit_dist_idx = np.array([i for i in range(correlation_array.shape[1])])[~(total_count==0)]
 ratio = correlation_array[0, :][~(total_count==0)] / total_count[~(total_count==0)]
