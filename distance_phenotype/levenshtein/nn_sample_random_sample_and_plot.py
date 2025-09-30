@@ -67,6 +67,8 @@ dataset.to_csv(os.path.join(save_path, "nearest_neighbour_dataset.csv"))
 print("Now finding the nearest neighbours in the dataset using pyrepseq")
 nn_array = nearest_neighbor_tcrdist(dataset, chain="both", max_edits=2, n_cpu=4)
 
+print(f"Selected number of nearest neighbour pairs is {nn_array.shape[0]}")
+
 
 #########
 # calculate correlation for the pre-selected pairs
