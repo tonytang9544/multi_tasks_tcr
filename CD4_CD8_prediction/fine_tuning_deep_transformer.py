@@ -26,6 +26,7 @@ train_config_dict = {
     "classifier_hid_dim": 256,
     "transformer_model_dim": 128,
     "encoder_feedforward_dim": 512,
+    "num_heads": 32,
     "num_encoder_layers": 3,
     "has_scheduler": True,
     "scheduler_gamma": 0.5,
@@ -55,6 +56,7 @@ if train_config_dict["one_hot_feature_embedding"]:
         dim_feedforward=train_config_dict["encoder_feedforward_dim"],
         num_layer=train_config_dict["num_encoder_layers"],
         transformer_model_dim=train_config_dict["transformer_model_dim"],
+        nhead=train_config_dict["num_heads"],
         embedding_bias=False,
         embedding_dim=29
     )
@@ -64,6 +66,7 @@ else:
         hidden_dim=train_config_dict["classifier_hid_dim"],
         dim_feedforward=train_config_dict["encoder_feedforward_dim"],
         num_layer=train_config_dict["num_encoder_layers"],
+        nhead=train_config_dict["num_heads"],
         transformer_model_dim=train_config_dict["transformer_model_dim"]
     )
     tokenise_method = lambda x: tokenise_each_tuple(x)
