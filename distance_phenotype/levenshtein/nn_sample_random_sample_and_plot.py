@@ -15,7 +15,7 @@ manual_logs = []
 config_dict = {
     "dataset_path": "~/Documents/results/data_preprocessing/TABLO/TABLO_full_sceptr_nr_cdr.csv.gz",
     "nearest_neighbour_max_examples": 250000,
-    "random_sample_examples": 25000,
+    "random_sample_examples": 2500,
     "annotation_level": "L1",
     "positive_phenotype_label": "CD4",
     "negative_phenotype_label": "CD8"
