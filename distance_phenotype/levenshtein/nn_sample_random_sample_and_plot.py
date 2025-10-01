@@ -155,11 +155,22 @@ for i in tqdm(range(sub_sample_size)):
 
 
 ###########
-# save logs
+# save logs and save correlation arrays
+
+result = pd.DataFrame(
+    levenshtein_phenotype_correlation_dict
+)
+
+result.to_csv(
+    os.path.join(save_path, "final_corr_dict.csv")
+)
+
+manual_logs.append("The calculated correlation matric is:")
+manual_logs.append(result.head().to_string())
+
 
 with open(os.path.join(save_path, "run.log"), "w") as f:
     f.write("\n".join(manual_logs))
-
 
 ##################
 # plotting
@@ -168,20 +179,22 @@ with open(os.path.join(save_path, "run.log"), "w") as f:
 ratio_array = [[k, v[0] / (v[0] + v[1]), v[0]+v[1]] for k, v in levenshtein_phenotype_correlation_dict.items()]
 ratio_array = np.array(ratio_array)
 
+print(ratio_array)
+
 
 fig, ax1 = plt.subplots()
 
 color = "blue"
 ax1.set_xlabel("Levenshtein distance")
 ax1.set_ylabel("phenotype correlations", color=color)
-ax1.scatter(ratio_array[0, :], ratio_array[1, :], color=color)
+ax1.scatter(ratio_array[:, 0], ratio_array[:, 1], color=color)
 # ax1.tick_params(axis='y', labelcolor=color)
 
 ax2 = ax1.twinx()  # instantiate a second Axes that shares the same x-axis
 
 color = 'red'
 ax2.set_ylabel("total example counts", color=color) 
-ax2.scatter(ratio_array[0, :], ratio_array[2, :], color=color)
+ax2.scatter(ratio_array[:, 0], ratio_array[:, 2], color=color)
 ax2.set_yscale("log")
 # ax2.tick_params(axis='y', labelcolor=color)
 
