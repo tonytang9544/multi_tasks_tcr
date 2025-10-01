@@ -9,7 +9,10 @@ import matplotlib.pyplot as plt
 
 import datetime
 
-manual_logs = []
+manual_logs = [
+    f"Running script is:{"/".join(__file__.split("/")[-3:])}"
+]
+print(manual_logs[-1])
 
 # configs
 config_dict = {
