@@ -157,30 +157,35 @@ for i in tqdm(range(sub_sample_size)):
 ###########
 # save logs and save correlation arrays
 
-result = pd.DataFrame(
-    levenshtein_phenotype_correlation_dict
-)
-
-result.to_csv(
-    os.path.join(save_path, "final_corr_dict.csv")
-)
-
-manual_logs.append("The calculated correlation matric is:")
-manual_logs.append(result.head().to_string())
-
 
 with open(os.path.join(save_path, "run.log"), "w") as f:
     f.write("\n".join(manual_logs))
 
-##################
-# plotting
 
-
-ratio_array = [[k, v[0] / (v[0] + v[1]), v[0]+v[1]] for k, v in levenshtein_phenotype_correlation_dict.items()]
+ratio_array = [[k, v[0] / (v[0] + v[1]), v[0]+v[1], v[0], v[1]] 
+               for k, v in levenshtein_phenotype_correlation_dict.items()]
 ratio_array = np.array(ratio_array)
 
-print(ratio_array)
 
+columns = [
+    "edit_distance", 
+    "corr_ratio", 
+    "total_example_count", 
+    "consistent_examples", 
+    "inconsistent_examples"
+]
+
+pd.DataFrame(
+    ratio_array, 
+    columns=columns
+).to_csv(
+    os.path.join(save_path, "results_data.csv.gz"), 
+    index=False
+)
+
+
+##################
+# plotting
 
 fig, ax1 = plt.subplots()
 

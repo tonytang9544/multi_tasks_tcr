@@ -2,26 +2,25 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-# a = {
-#     "3": [0, 1],
-#     "5": [23, 3]
-# }
+levenshtein_phenotype_correlation_dict={
+    "100": [2, 1],
+    "10": [100, 3]
+}
 
-# b = pd.DataFrame(a)
-# cols = np.array([int(i) for i in b.columns], dtype=np.int16)
-# c = b.to_numpy()
-# corr = c[0] / c.dot((1, 1))
+ratio_array = [[k, v[0] / (v[0] + v[1]), v[0]+v[1], v[0], v[1]] for k, v in levenshtein_phenotype_correlation_dict.items()]
+ratio_array = np.array(ratio_array)
 
-# print(corr)
-# plt.scatter(x=cols, y=corr)
-# plt.savefig("1.png")
-# plt.cla()
-# plt.close()
 
-a = [
-    "abc",
-    "def"
+columns = [
+    "edit_distance", 
+    "corr_ratio", 
+    "total_example_count", 
+    "consistent_examples", 
+    "inconsistent_examples"
 ]
 
-with open("test.txt", "w") as f:
-    f.write("\n".join(a))
+result = pd.DataFrame(ratio_array, columns=columns)
+result.to_csv("results_data.csv.gz", index=False)
+
+print(pd.read_csv("results_data.csv.gz").head())
+
