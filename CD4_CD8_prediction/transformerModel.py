@@ -5,22 +5,39 @@ from dataset_utils import generate_all_three_cdrs
 
 
 class TransformerTCRModel(nn.Module):
-    def __init__(self, transformer_model_dim=64, embedding_dim=4, embedding_bias=True, hidden_dim=128, nhead=8, num_layer=1, dim_feedforward=2048):
+    def __init__(self, 
+                 transformer_model_dim=128, 
+                 embedding_dim=4, 
+                 embedding_bias=False, 
+                 hidden_dim=128, 
+                 nhead=32, 
+                 num_layer=3, 
+                 dim_feedforward=512,
+                 num_output_labels:int=1,
+                 dropout_chance: float=0.2
+        ):
         '''
-        transformer_model_dim=64 is the dimension of the transformer embedding
-        hidden_dim is the dimension of the linear classification layer
-        embedding_dim is the dimension of the amino acid embedding space
+        transformer_model_dim: dimension of the transformer representation
+        hidden_dim: dimension of the linear classification layer
+        embedding_dim: dimension of the amino acid embedding
+        num_output_labels: number of (orthogonal) labels to predict
         '''
         super().__init__()
 
         self.transformer = nn.TransformerEncoder(
-            nn.TransformerEncoderLayer(d_model=transformer_model_dim, nhead=nhead, batch_first=True, dim_feedforward=dim_feedforward),
+            nn.TransformerEncoderLayer(
+                d_model=transformer_model_dim, 
+                nhead=nhead, 
+                batch_first=True, 
+                dim_feedforward=dim_feedforward,
+                dropout=dropout_chance,
+            ),
             num_layers=num_layer
         )
         self.amino_acid_projection = nn.Linear(embedding_dim, transformer_model_dim, bias=embedding_bias)
         self.fc1 = nn.Linear(transformer_model_dim, hidden_dim)
-        self.dropout = nn.Dropout(0.1)
-        self.fc2 = nn.Linear(hidden_dim, 1)
+        self.dropout = nn.Dropout(dropout_chance)
+        self.fc2 = nn.Linear(hidden_dim, num_output_labels)
 
 
     def forward(self, x):

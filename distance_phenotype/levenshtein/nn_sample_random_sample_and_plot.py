@@ -2,6 +2,8 @@ from Levenshtein import distance
 from pyrepseq.nn import nearest_neighbor_tcrdist
 from tqdm import tqdm
 
+from leven_utils import export_correlation_dict, sample_balanced_dataset, calculate_correlation_from_nn_samples, calculate_correlation_from_random_samples, plot_arrays
+
 import pandas as pd
 import numpy as np
 import os
@@ -49,7 +51,9 @@ print(manual_logs[-1])
 
 full_df = pd.read_csv(dataset_path).dropna()
 
-annotation_level = "annotation_" + config_dict["annotation_level"]
+_annotation_level = "annotation_" + config_dict["annotation_level"]
+label_col="label"
+
 
 ###############
 # sample two labels equally for nearest neighbour
@@ -57,23 +61,15 @@ annotation_level = "annotation_" + config_dict["annotation_level"]
 manual_logs.append("Now create balanced dataset for nearest neighbour.")
 print(manual_logs[-1])
 
-phenotype1_df = full_df[full_df[annotation_level] == config_dict["positive_phenotype_label"]].copy()
-
-if "negative_phenotype_label" in config_dict.keys() and config_dict["negative_phenotype_label"] is not None:
-    phenotype2_df = full_df[full_df[annotation_level] == config_dict["negative_phenotype_label"]].copy()
-else:
-    phenotype2_df = full_df[full_df[annotation_level] != config_dict["positive_phenotype_label"]].copy()
-
-num_examples_per_label = min(phenotype1_df.shape[0], phenotype2_df.shape[0], config_dict["nearest_neighbour_max_examples"])
-phenotype1_df = phenotype1_df.sample(num_examples_per_label)
-phenotype2_df = phenotype2_df.sample(num_examples_per_label)
-
-dataset = pd.concat([phenotype1_df, phenotype2_df])
-dataset = dataset.sample(frac=1).reset_index(drop=True)
-
-label_col = "label"
-dataset[label_col] = dataset[annotation_level] == config_dict["positive_phenotype_label"]
-dataset.to_csv(os.path.join(save_path, "nearest_neighbour_dataset.csv"))
+dataset = sample_balanced_dataset(
+    full_df=full_df,
+    annotation_level=_annotation_level,
+    positive_phenotype_label=config_dict["positive_phenotype_label"],
+    negative_phenotype_label=config_dict["negative_phenotype_label"],
+    nearest_neighbour_max_examples=config_dict["nearest_neighbour_max_examples"],
+    dataset_export_path=os.path.join(save_path, "nn_sampled_results_data.csv.gz"),
+    converted_label_col_name=label_col
+)
 
 ################
 # calculate levenshtein array
@@ -90,24 +86,25 @@ print(manual_logs[-1])
 #########
 # calculate correlation for the pre-selected pairs
 
-cdrs = ["CDR1A", "CDR2A", "CDR3A", "CDR1B", "CDR2B", "CDR3B"]
-levenshtein_phenotype_correlation_dict = {}
-
-manual_logs.append("Now calculating correlation for the pre-selected pairs.")
+manual_logs.append("Now calculate the correlation from nearest neighbour samples")
 print(manual_logs[-1])
 
+levenshtein_phenotype_correlation_dict = calculate_correlation_from_nn_samples(
+    nn_array=nn_array,
+    dataset=dataset
+)
 
-for i in tqdm(range(nn_array.shape[0])):
-    tcr1, tcr2, _ = nn_array[i, :]
-    total_distance = 0
-    for cdr in cdrs:
-        total_distance += distance(dataset.iloc[tcr1][cdr], dataset.iloc[tcr2][cdr])
+levenshtein_phenotype_correlation_dict = dict(sorted(levenshtein_phenotype_correlation_dict.items()))
 
-    is_consistent = 0 if dataset.iloc[tcr1][label_col] == dataset.iloc[tcr2][label_col] else 1
 
-    if total_distance not in levenshtein_phenotype_correlation_dict.keys():
-        levenshtein_phenotype_correlation_dict[total_distance] = [0, 0]
-    levenshtein_phenotype_correlation_dict[total_distance][is_consistent] += 1
+##############
+# export nn array
+
+nn_ratio_array = export_correlation_dict(
+    levenshtein_phenotype_correlation_dict,
+    os.path.join(save_path, "nn_sampled_results_data.csv.gz")
+)
+
 
 
 ###############
@@ -116,45 +113,32 @@ for i in tqdm(range(nn_array.shape[0])):
 manual_logs.append("Now generating balanced dataset using random sampling.")
 print(manual_logs[-1])
 
-phenotype1_df = full_df[full_df[annotation_level] == config_dict["positive_phenotype_label"]].copy()
-
-if "negative_phenotype_label" in config_dict.keys() and config_dict["negative_phenotype_label"] is not None:
-    phenotype2_df = full_df[full_df[annotation_level] == config_dict["negative_phenotype_label"]].copy()
-else:
-    phenotype2_df = full_df[full_df[annotation_level] != config_dict["positive_phenotype_label"]].copy()
-
-num_examples_per_label = min(phenotype1_df.shape[0], phenotype2_df.shape[0], config_dict["random_sample_examples"])
-phenotype1_df = phenotype1_df.sample(num_examples_per_label)
-phenotype2_df = phenotype2_df.sample(num_examples_per_label)
-
-dataset = pd.concat([phenotype1_df, phenotype2_df])
-dataset = dataset.sample(frac=1).reset_index(drop=True)
-
-label_col = "label"
-dataset[label_col] = dataset[annotation_level] == config_dict["positive_phenotype_label"]
-dataset.to_csv(os.path.join(save_path, "random_sampled_dataset.csv"))
+dataset = sample_balanced_dataset(
+    full_df=full_df,
+    annotation_level=_annotation_level,
+    positive_phenotype_label=config_dict["positive_phenotype_label"],
+    negative_phenotype_label=config_dict["negative_phenotype_label"],
+    nearest_neighbour_max_examples=config_dict["random_sample_examples"],
+    dataset_export_path=os.path.join(save_path, "nn_sampled_results_data.csv.gz"),
+    converted_label_col_name=label_col
+)
 
 
+#################
 # calculate levenshtein array
-
-cdrs = ["CDR1A", "CDR2A", "CDR3A", "CDR1B", "CDR2B", "CDR3B"]
-
-sub_sample_size = dataset.shape[0]
-
-manual_logs.append("Now calculate distance correlation for random selected tcrs")
+manual_logs.append("Now calculate the correlation from random samples")
 print(manual_logs[-1])
 
-for i in tqdm(range(sub_sample_size)):
-    for j in range(i, sub_sample_size):
-        total_distance = 0
-        for cdr in cdrs:
-            total_distance += distance(dataset.iloc[i][cdr], dataset.iloc[j][cdr])
+random_sample_correlation = calculate_correlation_from_random_samples(
+    dataset=dataset,
+)
 
-        is_consistent = 0 if dataset.iloc[i][label_col] == dataset.iloc[j][label_col] else 1
-                
-        if total_distance not in levenshtein_phenotype_correlation_dict.keys():
-            levenshtein_phenotype_correlation_dict[total_distance] = [0, 0]
-        levenshtein_phenotype_correlation_dict[total_distance][is_consistent] += 1
+random_sample_correlation = dict(sorted(random_sample_correlation.items()))
+
+random_ratio_array = export_correlation_dict(
+    random_sample_correlation,
+    os.path.join(save_path, "random_sampled_results_data.csv.gz")
+)
 
 
 ###########
@@ -165,49 +149,53 @@ with open(os.path.join(save_path, "run.log"), "w") as f:
     f.write("\n".join(manual_logs))
 
 
-ratio_array = [[k, v[0] / (v[0] + v[1]), v[0]+v[1], v[0], v[1]] 
-               for k, v in levenshtein_phenotype_correlation_dict.items()]
-ratio_array = np.array(ratio_array)
+random_distances = list(random_sample_correlation.keys())
 
 
-columns = [
-    "edit_distance", 
-    "corr_ratio", 
-    "total_example_count", 
-    "consistent_examples", 
-    "inconsistent_examples"
-]
+for each_dist in random_distances:
+    if each_dist in levenshtein_phenotype_correlation_dict.keys():
+        levenshtein_phenotype_correlation_dict[each_dist][0] += random_sample_correlation[each_dist][0]
+        levenshtein_phenotype_correlation_dict[each_dist][1] += random_sample_correlation[each_dist][1]
+    else:
+        levenshtein_phenotype_correlation_dict[each_dist] = random_distances[each_dist].copy()
 
-pd.DataFrame(
-    ratio_array, 
-    columns=columns
-).to_csv(
-    os.path.join(save_path, "results_data.csv.gz"), 
-    index=False
+full_ratio_array = export_correlation_dict(
+    levenshtein_phenotype_correlation_dict,
+    os.path.join(save_path, "full_results_data.csv.gz")
 )
+
 
 
 ##################
 # plotting
 
-fig, ax1 = plt.subplots()
-
-color = "blue"
-ax1.set_xlabel("Levenshtein distance")
-ax1.set_ylabel("phenotype correlations", color=color)
-ax1.scatter(ratio_array[:, 0], ratio_array[:, 1], color=color)
-# ax1.tick_params(axis='y', labelcolor=color)
-
-ax2 = ax1.twinx()  # instantiate a second Axes that shares the same x-axis
-
-color = 'red'
-ax2.set_ylabel("total example counts", color=color) 
-ax2.scatter(ratio_array[:, 0], ratio_array[:, 2], color=color)
-ax2.set_yscale("log")
-# ax2.tick_params(axis='y', labelcolor=color)
-
-fig.tight_layout()
-plt.title("phenotype agreement vs edit distance")
-plt.savefig(os.path.join(save_path, "edit_distance_phenotype.png"))
-plt.cla()
-plt.close()
+plot_arrays(
+    corr_arrays=[
+        nn_ratio_array,
+        random_ratio_array,
+        full_ratio_array
+    ],
+    corr_plot_configs=[
+        {"label": "nn_correlation",
+         "color": "#800000",
+         "marker": "s"},
+        {"label": "random_correlation",
+         "color": "#b00000",
+         "marker": "^"},
+        {"label": "combined_correlation",
+         "color": "#f00000",
+         "marker": "o"},
+    ],
+    sample_count_plot_configs=[
+        {"label": "nn_example_counts",
+         "color": "#505050",
+         "marker": "s"},
+        {"label": "random_example_counts",
+         "color": "#909090",
+         "marker": "^"},
+        {"label": "combined_example_counts",
+         "color": "#d0d0d0",
+         "marker": "o"},
+    ],
+    fig_save_file=os.path.join(save_path, "edit_distance_phenotype.png")
+)
