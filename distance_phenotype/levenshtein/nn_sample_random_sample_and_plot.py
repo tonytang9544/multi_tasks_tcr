@@ -67,7 +67,7 @@ dataset = sample_balanced_dataset(
     positive_phenotype_label=config_dict["positive_phenotype_label"],
     negative_phenotype_label=config_dict["negative_phenotype_label"],
     nearest_neighbour_max_examples=config_dict["nearest_neighbour_max_examples"],
-    dataset_export_path=os.path.join(save_path, "nn_sampled_results_data.csv.gz"),
+    dataset_export_path=os.path.join(save_path, "nn_sampled_dataset.csv.gz"),
     converted_label_col_name=label_col
 )
 
@@ -102,7 +102,7 @@ levenshtein_phenotype_correlation_dict = dict(sorted(levenshtein_phenotype_corre
 
 nn_ratio_array = export_correlation_dict(
     levenshtein_phenotype_correlation_dict,
-    os.path.join(save_path, "nn_sampled_results_data.csv.gz")
+    os.path.join(save_path, "nn_sampled_results.csv.gz")
 )
 
 
@@ -119,7 +119,7 @@ dataset = sample_balanced_dataset(
     positive_phenotype_label=config_dict["positive_phenotype_label"],
     negative_phenotype_label=config_dict["negative_phenotype_label"],
     nearest_neighbour_max_examples=config_dict["random_sample_examples"],
-    dataset_export_path=os.path.join(save_path, "nn_sampled_results_data.csv.gz"),
+    dataset_export_path=os.path.join(save_path, "random_sampled_dataset.csv.gz"),
     converted_label_col_name=label_col
 )
 
@@ -137,7 +137,7 @@ random_sample_correlation = dict(sorted(random_sample_correlation.items()))
 
 random_ratio_array = export_correlation_dict(
     random_sample_correlation,
-    os.path.join(save_path, "random_sampled_results_data.csv.gz")
+    os.path.join(save_path, "random_sampled_results.csv.gz")
 )
 
 
@@ -157,11 +157,11 @@ for each_dist in random_distances:
         levenshtein_phenotype_correlation_dict[each_dist][0] += random_sample_correlation[each_dist][0]
         levenshtein_phenotype_correlation_dict[each_dist][1] += random_sample_correlation[each_dist][1]
     else:
-        levenshtein_phenotype_correlation_dict[each_dist] = random_distances[each_dist].copy()
+        levenshtein_phenotype_correlation_dict[each_dist] = random_sample_correlation[each_dist].copy()
 
 full_ratio_array = export_correlation_dict(
     levenshtein_phenotype_correlation_dict,
-    os.path.join(save_path, "full_results_data.csv.gz")
+    os.path.join(save_path, "full_results.csv.gz")
 )
 
 

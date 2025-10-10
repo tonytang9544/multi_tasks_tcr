@@ -40,7 +40,7 @@ def sample_balanced_dataset(
     positive_phenotype_label: str="CD8",
     negative_phenotype_label: str="CD8",
     nearest_neighbour_max_examples: int=2500,
-    dataset_export_path: str="sampled_dataset.csv.gz",
+    dataset_export_path: str=None,
     converted_label_col_name: str="label"
 ):
 
@@ -60,7 +60,8 @@ def sample_balanced_dataset(
 
     label_col = converted_label_col_name
     dataset[label_col] = dataset[annotation_level] == positive_phenotype_label
-    dataset.to_csv(dataset_export_path)
+    if dataset_export_path is not None:
+        dataset.to_csv(dataset_export_path)
 
     return dataset
 
@@ -139,7 +140,6 @@ def plot_arrays(
     ax1.set_ylabel("phenotype correlations")
     for i in range(len(corr_arrays)):
         ax1.scatter(corr_arrays[i][:, 0], corr_arrays[i][:, 1], **corr_plot_configs[i])
-    ax1.legend()
     # ax1.tick_params(axis='y', labelcolor=color)
 
     ax2 = ax1.twinx()  # instantiate a second Axes that shares the same x-axis
@@ -147,12 +147,15 @@ def plot_arrays(
     # color = 'red'
     ax2.set_ylabel("total example counts")
     for i in range(len(corr_arrays)):
-        ax1.scatter(corr_arrays[i][:, 0], corr_arrays[i][:, 2], **sample_count_plot_configs[i])
+        ax2.scatter(corr_arrays[i][:, 0], corr_arrays[i][:, 2], **sample_count_plot_configs[i])
     ax2.set_yscale("log")
     # ax2.tick_params(axis='y', labelcolor=color)
 
-    fig.tight_layout()
+    # fig.tight_layout()
+    ax1.legend()
     ax2.legend()
+    # plt.legend()
+
     # plt.title("phenotype agreement vs edit distance")
     plt.savefig(fig_save_file)
     plt.cla()
