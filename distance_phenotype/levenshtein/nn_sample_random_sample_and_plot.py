@@ -73,7 +73,13 @@ dataset = sample_balanced_dataset(
 manual_logs.append("Now finding the nearest neighbours in the dataset using pyrepseq")
 print(manual_logs[-1])
 
-nn_array = nearest_neighbor_tcrdist(dataset, chain="both", max_edits=2, n_cpu=4)
+nn_array = nearest_neighbor_tcrdist(
+    dataset, 
+    chain="both", 
+    max_edits=2, 
+    n_cpu=4, 
+    # max_tcrdist=999 # This might not be necessary because this function is expected to output similar tcrs
+)
 
 manual_logs.append(f"Selected number of nearest neighbour pairs is {nn_array.shape[0]}")
 print(manual_logs[-1])
