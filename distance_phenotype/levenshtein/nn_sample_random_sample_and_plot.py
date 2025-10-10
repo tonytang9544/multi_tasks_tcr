@@ -1,13 +1,9 @@
-from Levenshtein import distance
 from pyrepseq.nn import nearest_neighbor_tcrdist
-from tqdm import tqdm
 
 from leven_utils import export_correlation_dict, sample_balanced_dataset, calculate_correlation_from_nn_samples, calculate_correlation_from_random_samples, plot_arrays
 
 import pandas as pd
-import numpy as np
 import os
-import matplotlib.pyplot as plt
 
 import datetime
 
