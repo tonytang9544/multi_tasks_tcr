@@ -69,15 +69,22 @@ def sample_balanced_dataset(
 def calculate_correlation_from_nn_samples(
     nn_array,
     dataset,
-    converted_label_col_name: str="label"
+    converted_label_col_name: str="label",
+    distance_function = distance
 ):
     '''
-    calculate phenotype correlation for each pairs specified in nearest neighbour samples
+    calculate phenotype correlation for each pairs specified in nearest neighbour samples.
 
     input
     ----------
         nn_array: the nearest neighbour array provided from pyrepseq.nn.nearest_neighbor_tcrdist
-        dataset: the dataset
+        dataset: the dataset used to generate nearest neighbour array
+        converted_label_col_name: name of the new column to be created to store positive/negative label for each sample
+        distance_function: function of distance that takes the form (seq1, seq2) -> int/float
+
+    output
+    ----------
+        dictionary of {distance: [number of consistent examples, number of inconsistent examples]}
     '''
     cdrs = ["CDR1A", "CDR2A", "CDR3A", "CDR1B", "CDR2B", "CDR3B"]
     levenshtein_phenotype_correlation_dict = {}
@@ -86,7 +93,7 @@ def calculate_correlation_from_nn_samples(
         tcr1, tcr2, _ = nn_array[i, :]
         total_distance = 0
         for cdr in cdrs:
-            total_distance += distance(dataset.iloc[tcr1][cdr], dataset.iloc[tcr2][cdr])
+            total_distance += distance_function(dataset.iloc[tcr1][cdr], dataset.iloc[tcr2][cdr])
 
         is_consistent = 0 if dataset.iloc[tcr1][converted_label_col_name] == dataset.iloc[tcr2][converted_label_col_name] else 1
 
@@ -99,8 +106,29 @@ def calculate_correlation_from_nn_samples(
 
 def calculate_correlation_from_random_samples(
     dataset,
-    converted_label_col_name: str="label"
+    converted_label_col_name: str="label",
+    distance_function = distance
 ):
+    '''
+    calculate phenotype correlation for each pairs specified in nearest neighbour samples.
+
+    input
+    ----------
+        dataset: the dataset that contains the following columns:
+            CDR1A
+            CDR2A
+            CDR3A
+            CDR1B
+            CDR2B
+            CDR3B
+            converted_label_col_name
+        converted_label_col_name: name of the new column to be created to store positive/negative label for each sample
+        distance_function: function of distance that takes the form (seq1, seq2) -> int/float
+
+    output
+    ----------
+        dictionary of {distance: [number of consistent examples, number of inconsistent examples]}
+    '''
     random_sample_correlation = {}
 
     cdrs = ["CDR1A", "CDR2A", "CDR3A", "CDR1B", "CDR2B", "CDR3B"]
@@ -111,7 +139,7 @@ def calculate_correlation_from_random_samples(
         for j in range(i, sub_sample_size):
             total_distance = 0
             for cdr in cdrs:
-                total_distance += distance(dataset.iloc[i][cdr], dataset.iloc[j][cdr])
+                total_distance += distance_function(dataset.iloc[i][cdr], dataset.iloc[j][cdr])
 
             is_consistent = 0 if dataset.iloc[i][converted_label_col_name] == dataset.iloc[j][converted_label_col_name] else 1
 
@@ -129,14 +157,16 @@ def plot_arrays(
     fig_save_file: str="edit_distance_phenotype.png"
 ):
     '''
-    corr_arrays: 
-        list of correlation arrays
-    corr_plot_configs: 
-        list of dictionaries containing configs for plotting correlations,
-        must have same length as corr_arrays
-    sample_count_plot_configs:
-        list of dictionaries containing configs for plotting sample number counts,
-        must have same length as corr_arrays
+    input
+    ----------
+        corr_arrays: 
+            list of correlation arrays
+        corr_plot_configs: 
+            list of dictionaries containing configs for plotting correlations,
+            must have same length as corr_arrays
+        sample_count_plot_configs:
+            list of dictionaries containing configs for plotting sample number counts,
+            must have same length as corr_arrays
     '''
 
     assert len(corr_arrays) == len(corr_plot_configs), "corr_plot_configs must have the same number of elements as corr_arrays."
