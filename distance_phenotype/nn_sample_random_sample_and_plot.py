@@ -16,10 +16,10 @@ print(manual_logs[-1])
 config_dict = {
     "dataset_path": "~/Documents/results/data_preprocessing/TABLO/TABLO_full_sceptr_nr_cdr.csv.gz",
     "nearest_neighbour_max_examples": 2500,
-    "random_sample_examples": 25,
+    "random_sample_examples": 250,
     "annotation_level": "L1",
     "positive_phenotype_label": "CD4",
-    "negative_phenotype_label": "CD8"
+    "negative_phenotype_label": "CD8",
 }
 
 # record script start time
@@ -78,7 +78,7 @@ nn_array = nearest_neighbor_tcrdist(
     chain="both", 
     max_edits=2, 
     n_cpu=4, 
-    # max_tcrdist=999 # This might not be necessary because this function is expected to output similar tcrs
+    max_tcrdist=999 # This might not be necessary because this function is expected to output similar tcrs
 )
 
 manual_logs.append(f"Selected number of nearest neighbour pairs is {nn_array.shape[0]}")

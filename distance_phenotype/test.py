@@ -1,20 +1,42 @@
-import numpy as np
+# import numpy as np
+# import pandas as pd
 
-a = np.array([[1, 2, 3], [4, 5, 6]])
+# from tcrdist.repertoire import TCRrep
 
-b = np.array([[7,8,9], [10, 11, 12]])
+# df = pd.read_csv(
+#     "/home/minzhetang/Documents/results/distance_phenotype/CD4_CD8/balanced/result/20251103_1459/nn_sampled_dataset.csv.gz", 
+#     index_col=False
+# )
 
-# print(np.append(a, b))
-# print(np.append(a, b, axis=0))
-# print(a.T.dot(np.array([1, 1])))
+# print(df.head())
+# print(df.columns)
+print(str(None))
 
-# from corr_utils import plot_correlation
+# df = df.rename(
+#     columns={
+#         'CDR1A': 'cdr1_a_aa',
+#         'CDR1B': 'cdr1_b_aa',
+#         'CDR2A': 'cdr2_a_aa',
+#         'CDR2B': 'cdr2_b_aa',
+#         'CDR3A': 'cdr3_a_aa',
+#         'CDR3B': 'cdr3_b_aa',
+#     }
+# )
+# df["pmhc_a_aa"] = ["A"] * df.shape[0]
+# df["pmhc_b_aa"] = ["A"] * df.shape[0]
 
-# plot_correlation(dist_array=np.array([[1,2,3],[1,3,4]]), TABLO_data=2)
 
-c = np.array([0, 1, 2])#, np.nan, 3, np.divide(0, 0)])
-print(c)
-print(c[~(c == 0)])
-print(np.array([i for i in range(len(c))])[~np.isnan(c)])
 
-print(np.divide([0, 1], [0, 1]))
+# tcr_rep = TCRrep(
+#     cell_df=df, 
+#     organism='human', 
+#     chains=['alpha', 'beta'],
+#     imgt_aligned      = False,
+#     infer_all_genes   = False,
+#     infer_cdrs        = False,
+# )
+# tcr_rep.compute_distances()
+
+
+# print(tcr_rep.pw_alpha)
+# print(tcr_rep.pw_beta)

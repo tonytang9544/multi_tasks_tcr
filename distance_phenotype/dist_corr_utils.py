@@ -198,3 +198,4 @@ def plot_arrays(
     plt.savefig(fig_save_file)
     plt.cla()
     plt.close()
+
