@@ -150,6 +150,104 @@ def calculate_correlation_from_random_samples(
     return random_sample_correlation
 
 
+def calculate_correlation_from_random_samples_v2(
+    dataset,
+    converted_label_col_name: str="label",
+    distance_function = distance
+):
+    '''
+    calculate phenotype correlation for each pairs specified in nearest neighbour samples.
+
+    input
+    ----------
+        dataset: the dataset that contains the following columns:
+            CDR1A
+            CDR2A
+            CDR3A
+            CDR1B
+            CDR2B
+            CDR3B
+            converted_label_col_name
+        converted_label_col_name: name of the new column to be created to store positive/negative label for each sample
+        distance_function: function of distance that takes the form (seq1, seq2) -> int/float
+
+    output
+    ----------
+        dictionary of {distance: [number of consistent examples, number of inconsistent examples]}
+    '''
+
+    cdrs = ["CDR1A", "CDR2A", "CDR3A", "CDR1B", "CDR2B", "CDR3B"]
+
+    sub_sample_size = dataset.shape[0]
+
+    # Sort dataset by label to speed up label comparison
+    dataset = dataset.sort_values(by=converted_label_col_name, ascending=False).reset_index(drop=True)
+
+    # Get the count of positive labels
+    positive_label_count = dataset[converted_label_col_name].value_counts().iloc[0]
+
+    # Pre-allocate distance array
+    all_distances = np.zeros((sub_sample_size, sub_sample_size, len(cdrs)), dtype=int) -1
+
+    print("Calculating all pairwise distances...")
+    # Calculate distances for each CDR and store in all_distances
+    for i in tqdm(range(sub_sample_size-1)):
+        for j in range(i+1, sub_sample_size):
+            for k in range(len(cdrs)):
+                all_distances[i, j, k] = distance_function(dataset.iloc[i][cdrs[k]], dataset.iloc[j][cdrs[k]])
+                all_distances[j, i, k] = all_distances[i, j, k]
+    
+    # Sum distances across all CDRs
+    distances = np.sum(all_distances, axis=2)
+
+    # Now calculate consistent and inconsistent counts
+    # Consistent pairs are those within the same label group
+    consistent_distances_part1, consistent_counts_part1 = np.unique(
+        distances[:positive_label_count, :positive_label_count], 
+        return_counts=True
+    )
+
+    # Filter out -1 distances (self-comparisons)
+    valid_indices = consistent_distances_part1 != -1
+    consistent_distances_part1 = consistent_distances_part1[valid_indices]
+    consistent_counts_part1 = consistent_counts_part1[valid_indices] / 2 # to account for double counting
+
+    # Second part of consistent pairs
+    consistent_distances_part2, consistent_counts_part2 = np.unique(
+        distances[positive_label_count+1:, positive_label_count+1:], 
+        return_counts=True
+    )
+
+    valid_indices = consistent_distances_part2 != -1
+    consistent_distances_part2 = consistent_distances_part2[valid_indices]
+    consistent_counts_part2 = consistent_counts_part2[valid_indices] / 2 # to account for double counting
+
+    # Inconsistent pairs are those between the two label groups
+    inconsistent_distances, inconsistent_counts = np.unique(
+        distances[:positive_label_count, positive_label_count+1:], 
+        return_counts=True
+    )
+
+    # Initialise correlation array
+    correlation_array = np.zeros((np.max(distances)+1, 2), dtype=int)
+
+    # Populate consistent counts
+    for dist, count in zip(consistent_distances_part1, consistent_counts_part1):
+        correlation_array[dist, 0] += count
+    for dist, count in zip(consistent_distances_part2, consistent_counts_part2):
+        correlation_array[dist, 0] += count
+
+    # Populate inconsistent counts
+    for dist, count in zip(inconsistent_distances, inconsistent_counts):
+        correlation_array[dist, 1] += count
+        
+    # Convert to dictionary
+    non_zero_indices = np.where(np.sum(correlation_array, axis=1) > 0)[0]
+    random_sample_correlation = {dist: correlation_array[dist].tolist() for dist in non_zero_indices}
+
+    return random_sample_correlation
+
+
 def plot_arrays(
     corr_arrays: list,
     corr_plot_configs: list,

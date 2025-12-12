@@ -1,6 +1,6 @@
 from pyrepseq.nn import nearest_neighbor_tcrdist
 
-from dist_corr_utils import export_correlation_dict, sample_balanced_dataset, calculate_correlation_from_nn_samples, calculate_correlation_from_random_samples, plot_arrays
+from dist_corr_utils import export_correlation_dict, sample_balanced_dataset, calculate_correlation_from_random_samples_v2, plot_arrays
 
 import pandas as pd
 import os
@@ -17,9 +17,9 @@ print(manual_logs[-1])
 config_dict = {
     "dataset_path": "~/Documents/results/data_preprocessing/TABLO/TABLO_full_sceptr_nr_cdr.csv.gz",
     "random_sample_examples": 25000,
-    "annotation_level": "L3",
-    "positive_phenotype_label": "MAIT",
-    "negative_phenotype_label": None,
+    "annotation_level": "L1",
+    "positive_phenotype_label": "CD4",
+    "negative_phenotype_label": "CD8",
 }
 
 # record script start time
@@ -82,7 +82,7 @@ dataset = sample_balanced_dataset(
 manual_logs.append("Now calculate the correlation from random samples")
 print(manual_logs[-1])
 
-random_sample_correlation = calculate_correlation_from_random_samples(
+random_sample_correlation = calculate_correlation_from_random_samples_v2(
     dataset=dataset,
 )
 
