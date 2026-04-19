@@ -14,6 +14,8 @@ mapping = {
 }
 
 tcr_data_path = "~/Documents/dataset/TABLO_full_alpha_beta_combined.csv.gz"
+# change this to the path where you have downloaded the TABLO dataset
+# TODO: add data preprocessing code to generate this file from the raw data.
 
 print(f"********* loading file: {tcr_data_path}")
 dataset = pd.read_csv(tcr_data_path)

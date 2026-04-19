@@ -41,7 +41,8 @@ def sample_balanced_dataset(
     negative_phenotype_label: str="CD8",
     nearest_neighbour_max_examples: int=2500,
     dataset_export_path: str=None,
-    converted_label_col_name: str="label"
+    converted_label_col_name: str="label",
+    shuffle: bool=True
 ):
 
     phenotype1_df = full_df[full_df[annotation_level] == positive_phenotype_label].copy()
@@ -56,7 +57,8 @@ def sample_balanced_dataset(
     phenotype2_df = phenotype2_df.sample(num_examples_per_label)
 
     dataset = pd.concat([phenotype1_df, phenotype2_df])
-    dataset = dataset.sample(frac=1).reset_index(drop=True)
+    if shuffle:
+        dataset = dataset.sample(frac=1).reset_index(drop=True)
 
     label_col = converted_label_col_name
     dataset[label_col] = dataset[annotation_level] == positive_phenotype_label
@@ -135,8 +137,8 @@ def calculate_correlation_from_random_samples(
 
     sub_sample_size = dataset.shape[0]
 
-    for i in tqdm(range(sub_sample_size)):
-        for j in range(i, sub_sample_size):
+    for i in tqdm(range(sub_sample_size-1)):
+        for j in range(i+1, sub_sample_size):
             total_distance = 0
             for cdr in cdrs:
                 total_distance += distance_function(dataset.iloc[i][cdr], dataset.iloc[j][cdr])
@@ -153,7 +155,8 @@ def calculate_correlation_from_random_samples(
 def calculate_correlation_from_random_samples_v2(
     dataset,
     converted_label_col_name: str="label",
-    distance_function = distance
+    distance_function = distance,
+    dataset_already_sorted: bool=False
 ):
     '''
     calculate phenotype correlation for each pairs specified in nearest neighbour samples.
@@ -181,13 +184,14 @@ def calculate_correlation_from_random_samples_v2(
     sub_sample_size = dataset.shape[0]
 
     # Sort dataset by label to speed up label comparison
-    dataset = dataset.sort_values(by=converted_label_col_name, ascending=False).reset_index(drop=True)
+    if not dataset_already_sorted:
+        dataset = dataset.sort_values(by=converted_label_col_name, ascending=False).reset_index(drop=True)
 
     # Get the count of positive labels
     positive_label_count = dataset[converted_label_col_name].value_counts().iloc[0]
 
     # Pre-allocate distance array
-    all_distances = np.zeros((sub_sample_size, sub_sample_size, len(cdrs)), dtype=int) -1
+    all_distances = np.zeros((sub_sample_size, sub_sample_size, len(cdrs)), dtype=np.int8) -1
 
     print("Calculating all pairwise distances...")
     # Calculate distances for each CDR and store in all_distances
@@ -207,8 +211,8 @@ def calculate_correlation_from_random_samples_v2(
         return_counts=True
     )
 
-    # Filter out -1 distances (self-comparisons)
-    valid_indices = consistent_distances_part1 != -1
+    # Filter out self-comparisons
+    valid_indices = consistent_distances_part1 >= 0
     consistent_distances_part1 = consistent_distances_part1[valid_indices]
     consistent_counts_part1 = consistent_counts_part1[valid_indices] / 2 # to account for double counting
 
@@ -218,7 +222,7 @@ def calculate_correlation_from_random_samples_v2(
         return_counts=True
     )
 
-    valid_indices = consistent_distances_part2 != -1
+    valid_indices = consistent_distances_part2 >= 0
     consistent_distances_part2 = consistent_distances_part2[valid_indices]
     consistent_counts_part2 = consistent_counts_part2[valid_indices] / 2 # to account for double counting
 
@@ -229,7 +233,7 @@ def calculate_correlation_from_random_samples_v2(
     )
 
     # Initialise correlation array
-    correlation_array = np.zeros((np.max(distances)+1, 2), dtype=int)
+    correlation_array = np.zeros((np.max(distances)+1, 2), dtype=np.float32)
 
     # Populate consistent counts
     for dist, count in zip(consistent_distances_part1, consistent_counts_part1):
